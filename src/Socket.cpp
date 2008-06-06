@@ -24,7 +24,6 @@ bool Socket::connectSocket() {
 		memset(&client, 0, sizeof(client));
 		client.sin_family = AF_INET;
 		client.sin_port = htons(port);
-		client.sin_len = sizeof(client);
 		client.sin_addr.s_addr = ((in_addr*)((hostent *)gethostbyname(host)->h_addr))->s_addr;
 		if(proto == IPPROTO_TCP) {
 			//Disable the Nagle algorithm
