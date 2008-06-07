@@ -1,3 +1,17 @@
+/*
+*Project Name: Bahamut-Zero
+*Programmers: Codestation, ZackVixACD, 
+*Project Descrption:
+*
+*
+*File Description:
+*
+*Special Notes:
+*
+*
+*Copyright Stuff: 
+*/
+
 #include <stdlib.h>
 #include <pthread.h>
 #include "Socket.h"
