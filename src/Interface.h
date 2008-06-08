@@ -1,3 +1,22 @@
+/*
+*Project Name: Bahamut
+* 
+*Programmers: Codestation, ZackVixACD
+* 
+*Project Descrption: The project bahamut is a full ad-hoc tunneling
+*	software to be used by the Playstation Portable (PSP) to emulate 
+*	online features.
+*
+*File Description:
+*	Network interface functions
+*Special Notes:
+*	TODO: use the native functions for every platform
+* 		: make a tun/tap alternative
+*
+*Copyright Stuff:
+* 	TODO: put GPLv3 header
+*/
+
 #ifndef INTERFACE_H_
 #define INTERFACE_H_
 
