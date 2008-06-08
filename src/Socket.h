@@ -38,15 +38,6 @@ private:
 	u_int packet_count;
 	sockaddr_in client;
 
-#pragma pack(push,1)
-	struct packet_container {
-		u_char header[2];
-		u_int counter;
-		u_int size;
-		u_char data[1490];
-	};
-#pragma pack(pop)
-	
 	in_addr_t resolve(const char *url);
 public:
 	Socket(const char *addr, int port, const char *proto);

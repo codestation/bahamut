@@ -19,6 +19,11 @@
 #ifndef SERVERSOCKET_H_
 #define SERVERSOCKET_H_
 
+#include <netinet/in.h>
+#include <netdb.h>
+#include <unistd.h>
+#include <string.h>
+
 class ServerSocket
 {
 public:
