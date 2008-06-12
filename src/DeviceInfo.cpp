@@ -8,10 +8,9 @@
 *	online features.
 *
 *File Description:
-*	Network interface functions
+*	Holds some device info (MAC address, current packet count)
 *Special Notes:
-*	TODO: use the native functions for every platform
-* 		: make a tun/tap alternative
+*	TODO: add more info: IP address, and some account info.
 *
 *Copyright Stuff:
 *   This program is free software: you can redistribute it and/or modify
@@ -28,33 +27,34 @@
 *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef INTERFACE_H_
-#define INTERFACE_H_
+#include "DeviceInfo.h"
 
-#include <pcap.h>
-#include <string.h>
-#include "DeviceContainer.h"
+DeviceInfo::DeviceInfo(const u_char *psp_mac) {
+	count = 0;
+	memcpy(mac, psp_mac, 6);
+}
+const u_char *DeviceInfo::getMAC() {
+	return mac;
+}
 
-class Interface {
-private:
-	char *dev;
-	pcap_t *handle;
-	pcap_pkthdr* packet_header;
-	char errbuf[PCAP_ERRBUF_SIZE];
-	struct bpf_program fp;
+const char *DeviceInfo::getMACstr() {
+	char *mac_str = new char[18];
+	sprintf(mac_str,"%.2x:%.2x:%.2x:%.2x:%.2x:%.2x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+	return mac_str;
+}
 
-public:
-	Interface(const char *dev);
-	bool open();
-	void close();
-	int captureLoop(pcap_handler packet_func);
-	int capture(const void *packet_data, size_t size);
-	int inject(const u_char *packet_data, size_t size);
-	int compileFilter(char *filter);
-	int updateFilters(DeviceContainer *cont);
-	int setFilter();
-	void breakLoop();
-	virtual ~Interface();
-};
-
-#endif /*INTERFACE_H_*/
+void DeviceInfo::setMAC(const u_char *psp_mac) {
+	memcpy(mac, psp_mac, 6);
+}
+int DeviceInfo::getPacketCounter() {
+	return count;
+}
+void DeviceInfo::setPacketCounter(int newcount) {
+	count = newcount;
+}
+bool DeviceInfo::compareMAC(const u_char *mac) {
+	return memcmp(this->mac, mac, 6) == 0;	
+}
+DeviceInfo::~DeviceInfo() {
+	
+}

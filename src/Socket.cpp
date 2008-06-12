@@ -14,7 +14,18 @@
 * 		: change the proto variable from char * to int (to get rid of strdup)
 *
 *Copyright Stuff:
-* 	TODO: put GPLv3 header
+*   This program is free software: you can redistribute it and/or modify
+*   it under the terms of the GNU General Public License as published by
+*   the Free Software Foundation, either version 3 of the License, or
+*   (at your option) any later version.
+* 
+*   This program is distributed in the hope that it will be useful,
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*   GNU General Public License for more details.
+* 
+*  You should have received a copy of the GNU General Public License
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "Socket.h"
@@ -64,13 +75,6 @@ bool Socket::connectSocket() {
 		client.sin_family = AF_INET;
 		client.sin_port = htons(port);
 		client.sin_addr.s_addr = ((in_addr*)((hostent *)gethostbyname(host)->h_addr))->s_addr;
-		if(proto == IPPROTO_TCP) {
-			//Disable the Nagle algorithm
-			// FIXME: remove this when not using tcp for game data anymore
-			if(setsockopt(sock, IPPROTO_TCP, 1, &socket_flag, sizeof(int)) != 0) {
-				return false;
-			}
-		}
 		return connect(sock, (struct sockaddr *)&client, sizeof(client)) >= 0;
 	} else {
 		return false;
@@ -98,20 +102,39 @@ ssize_t Socket::readSocket(void *buffer, size_t size) {
  * 		buffer: pointer to a buffer that will hold the data
  * 		size: max bytes to be read by the socket
  * Returns: (>= 0) number of bytes received, -1 on error
- * FIXME: remove the packet_container(doesnt belong to here)
 */
-ssize_t Socket::writeSocket(const void *data, size_t length) {
-	struct packet_container pkt;
-	pkt.size = length;
-	pkt.header[0] = 'M';
-	pkt.header[1] = 'H';
-	pkt.counter = packet_count;
-	memcpy(pkt.data, data, length);
-	int res = send(sock, &pkt, length + PACKET_HEADER , 0);
-	if(res > 0) {
-		packet_count++;
+ssize_t Socket::readSocket(PspPacket *packet) {
+	int res = recv(sock, packet->getPacketData(), packet->getPacketSize(), 0);
+	if(res >= 0) {
+		packet->setPayloadSize(res);
 	}
 	return res;
+}
+
+/*
+ * Reads a socket and store the data in the specified buffer
+ * The function doesnt return until some bytes are readed or an error 
+ * ocuur
+ * Parameters:
+ * 		buffer: pointer to a buffer that will hold the data
+ * 		size: max bytes to be read by the socket
+ * Returns: (>= 0) number of bytes received, -1 on error
+*/
+ssize_t Socket::writeSocket(const void *data, size_t length) {
+	return send(sock, data, length , 0);
+}
+
+/*
+ * Reads a socket and store the data in the specified buffer
+ * The function doesnt return until some bytes are readed or an error 
+ * ocuur
+ * Parameters:
+ * 		buffer: pointer to a buffer that will hold the data
+ * 		size: max bytes to be read by the socket
+ * Returns: (>= 0) number of bytes received, -1 on error
+*/
+ssize_t Socket::writeSocket(PspPacket *packet) {
+	return send(sock, packet->getPacketData(), packet->getPacketSize() , 0);
 }
 
 /*

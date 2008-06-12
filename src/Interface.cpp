@@ -14,7 +14,18 @@
 * 		: make a tun/tap alternative
 *
 *Copyright Stuff:
-* 	TODO: put GPLv3 header
+*   This program is free software: you can redistribute it and/or modify
+*   it under the terms of the GNU General Public License as published by
+*   the Free Software Foundation, either version 3 of the License, or
+*   (at your option) any later version.
+* 
+*   This program is distributed in the hope that it will be useful,
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*   GNU General Public License for more details.
+* 
+*  You should have received a copy of the GNU General Public License
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "Interface.h"
@@ -106,7 +117,36 @@ int Interface::compileFilter(char *filter) {
 */
 int Interface::setFilter() {
 	return pcap_setfilter(handle, &fp);
+	
 }
+
+int Interface::updateFilters(DeviceContainer *cont) {
+	char str[1024];
+	bool last = false;
+	strcpy(str, "not ether src ");
+	for(int i = 0;i < 4;i++) {
+		DeviceInfo *dev = cont->getDeviceAtPos(i);
+		if(dev) {
+			if(last) {
+				strcat(str, " and not ether src ");
+			}
+			strcat(str, dev->getMACstr());
+			last = true;
+		} else {
+			last = false;
+		}
+	}
+	if(compileFilter(str) != -1) {
+		if(setFilter() == -1) {
+			return -2;
+		}
+	} else {
+		return -1;
+	}
+	return 0;
+}
+
+
 
 /*
  * Closes the interface

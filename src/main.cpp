@@ -13,188 +13,89 @@
 *	none yet
 *
 *Copyright Stuff:
-* 	TODO: put GPLv3 header
+*   This program is free software: you can redistribute it and/or modify
+*   it under the terms of the GNU General Public License as published by
+*   the Free Software Foundation, either version 3 of the License, or
+*   (at your option) any later version.
+* 
+*   This program is distributed in the hope that it will be useful,
+*   but WITHOUT ANY WARRANTY; without even the implied warranty of
+*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*   GNU General Public License for more details.
+* 
+*  You should have received a copy of the GNU General Public License
+*   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <stdlib.h>
 #include <pthread.h>
 #include "Socket.h"
 #include "Interface.h"
-
-#define ETHER_ADDR_LEN	6
-
+#include "PspPacket.h"
+#include "DeviceInfo.h"
+#include "DeviceContainer.h"
+pthread_t th;
 Socket *sock = NULL;
 Interface *interf = NULL;
-u_char buffer[2048];
-u_int buffer_offset = 0;
-u_int buffer_end = 0;
-pthread_t th;
 bool flag = false;
-u_int count = 0;
-u_char ether_shost[4][ETHER_ADDR_LEN];
-u_char ether_dhost[4][ETHER_ADDR_LEN];
-int used_src_eth = 0;
-int used_dst_eth = 0;
+DeviceContainer *src_con = NULL;
+DeviceContainer *dst_con = NULL;
 
-//u_char mac_a[6] = {1,2,3,4,5,6};
-//u_char mac_b[6] = {6,5,4,3,2,1};
-//bool mac = false;
-
-bool is_registered(const u_char *packet) {
-	bool found = false;
-	int i = 0;
-	while(i < used_src_eth && !found) {
-		if(memcmp(ether_shost[i], &packet[ETHER_ADDR_LEN], ETHER_ADDR_LEN) == 0){
-			found = true;
-		} else {
-			i++;
-		}
-	}
-	return found;
-}
-
-void update_filters() {
-	char str[1024];
-	char mac[32];
-	strcpy(str, "not (ether src ");
-	for(int i = 0;i < used_dst_eth;i++) {
-		sprintf(mac,"%.2x:%.2x:%.2x:%.2x:%.2x:%.2x)",ether_dhost[i][0],ether_dhost[i][1],ether_dhost[i][2],ether_dhost[i][3],ether_dhost[i][4],ether_dhost[i][5]);
-		strcat(str,mac);
-		if(i < (used_dst_eth-1)) {
-			strcat(str, " and not (ether src ");
-		}
-	}
-	printf("Compiled rule: %s\n", str);
-	if(interf->compileFilter(str) != -1) {
-		if(interf->setFilter() == -1) {
-			printf("Error while set the network filter\n");
-		}
-	} else {
-		printf("Error while compile the network filter\n");
-	}
-}
-
-void register_mac(const u_char *packet) {
-	if(!is_registered(packet)) {
-		if(used_src_eth < 4) {
-			memcpy(ether_shost[used_src_eth],&packet[ETHER_ADDR_LEN], ETHER_ADDR_LEN);
-			printf("Registered source PSP with MAC: %.2x:%.2x:%.2x:%.2x:%.2x:%.2x\n", ether_shost[used_src_eth][0], ether_shost[used_src_eth][1], ether_shost[used_src_eth][2], ether_shost[used_src_eth][3], ether_shost[used_src_eth][4], ether_shost[used_src_eth][5]);
-			used_src_eth++;
-		} else {
-			printf("Cant register more source devices, sorry\n");
-		}
-	}
-}
-
-
-bool is_dst_registered(const u_char *packet) {
-	bool found = false;
-	int i = 0;
-	while(i < used_dst_eth && !found) {
-		if(memcmp(ether_dhost[i], &packet[ETHER_ADDR_LEN], ETHER_ADDR_LEN) == 0){
-			found = true;
-		} else {
-			i++;
-		}
-	}
-	return found;
-}
-
-void register_dst_mac(const u_char *packet) {
-	if(!is_dst_registered(packet)) {
-		if(used_dst_eth < 4) {
-			memcpy(ether_dhost[used_dst_eth],&packet[ETHER_ADDR_LEN], ETHER_ADDR_LEN);
-			printf("Registered remote PSP with MAC: %.2x:%.2x:%.2x:%.2x:%.2x:%.2x\n", ether_dhost[used_dst_eth][0], ether_dhost[used_dst_eth][1], ether_dhost[used_dst_eth][2], ether_dhost[used_dst_eth][3], ether_dhost[used_dst_eth][4], ether_dhost[used_dst_eth][5]);
-			used_dst_eth++;
-			update_filters();
-		} else {
-			printf("Cant register more remote devices, sorry\n");
-		}
-	}
-}
-
-void packet_callback(u_char* user, const struct pcap_pkthdr* packet_header, const u_char* packet_data) {
+void capture_callback(u_char* user, const struct pcap_pkthdr* packet_header, const u_char* packet_data) {
+	PspPacket packet;
+	packet.setPayload(packet_data, packet_header->len);
 	if(!flag) {
-		//u_char *packet_dat = new u_char[packet_header->len];
-		//memcpy(packet_dat, packet_data, packet_header->len);
-		//if(mac) {
-		//	memcpy(packet_dat+6,mac_a,6);
-		//}
-		register_mac(packet_data);
-		//printf("<<<<< Captured packet of %'4i bytes, sending to server...\n", packet_header->len);
-		if(sock->writeSocket(packet_data, packet_header->len) < 0) {
+		src_con->addDevice(new DeviceInfo(packet.getSrcMAC()));
+		if(sock->writeSocket(&packet) < 0) {
 			printf("Conection closed by host. Terminating capturing thread...\n");
 			flag = true;
-			//interf->breakLoop();
-			//sock->closeSocket();
 		}
 	}
 }
 
-void *thread_loop(void *arg) {
+void *inject_thread(void *arg) {
+	PspPacket *packet = new PspPacket();
 	while(!flag) {
-		//printf("Waiting for server frame...\n");
-		int size = sock->readSocket(buffer + buffer_offset, sizeof(buffer) - buffer_offset);
-		if(size < 0) {
+		if(sock->readSocket(packet) < 0) {
 			printf("Conection closed by host. Terminating injecting thread...\n");
 			flag = true;
 			interf->breakLoop();
-			//sock->closeSocket();
 			break;
 		}
-		//printf(">>>>> Received frame from server of %'4i bytes\n", size);
-		buffer_end = buffer_offset + size;
-		buffer_offset = 0;
-		while(true) {
-			if(buffer_offset > (buffer_end - 10)) {
-				//printf("End of buffer reached\n");
-				break;
-			}
-			if(buffer[buffer_offset] == 'M' && buffer[buffer_offset+1] == 'H') {
-				//printf("PSP packet recognized\n");
-				buffer_offset += 2;
-				if(*(u_int *)(buffer+buffer_offset) >= count) {
-					printf("Packet arrives at wrong order. Discarding...\n");
-					buffer_offset += 4;
-					buffer_offset += *(int *)(buffer+buffer_offset);
+		if(packet->checkHeader()) {
+			DeviceInfo *dev = dst_con->getDevice(packet->getSrcMAC());
+			if(dev == NULL) {
+				if(!dst_con->addDevice(new DeviceInfo(packet->getSrcMAC()))) {
+					printf("Cant add more than 4 devices: %s\n", packet->getScrMACstr());
 					continue;
-				}
-				count = *(u_int *)(buffer+buffer_offset);
-				buffer_offset += 4;
-				u_int len = *(int *)(buffer+buffer_offset);
-				//printf("PSP packet lenght: %'4i bytes\n", len);
-				buffer_offset += 4;
-				if(len <= (buffer_end - buffer_offset)) {
-					register_dst_mac(buffer + buffer_offset);
-					//printf("Injecting packet to interface...\n");
-					if(interf->inject(buffer + buffer_offset, len) == -1) {
-						printf("Error while injecting packet\n");
-					}
-					buffer_offset += len;
 				} else {
-					//printf("Incomplete packet, more data is needed\n");
-					buffer_offset -= 10;
-					break;
+					printf("Registered new remote device, MAC: %s\n", packet->getDstMACstr());
+					printf("Updating filtering rules... ");
+					switch(interf->updateFilters(dst_con)) {
+					case 0:
+						printf("done\n");
+						break;
+					case -1:
+						printf("error while compiling filter\n");
+						break;
+					case -2:
+						printf("error while applying filter\n");
+					}
 				}
 			} else {
-				printf("Unknown packet. Discarding...\n");
-				buffer_end = buffer_offset;
-				break;
+				if(packet->getPacketCounter() <= dev->getPacketCounter()) {
+					printf("Packet arrives at wrong order. Discarding...");
+					continue;
+				}
 			}
+			dev->setPacketCounter(packet->getPacketCounter());
+			interf->inject(packet->getPayload(), packet->getPayloadSize());
 		}
-		u_int block_size = buffer_end - buffer_offset;
-		if(block_size > 0) {
-			//printf("Buffer not empty, %i bytes left, reallocating frame...\n", block_size);
-			u_char *temp = new u_char[block_size];
-			memcpy(temp, buffer + buffer_offset, block_size);
-			memcpy(buffer, temp, block_size);
-			delete temp;
-		}
-		buffer_offset = block_size;	
 	}
 	return 0;
 }
 
+//TODO remove this function, or integrate with the interface class
 char *select_adapter() {
 	pcap_if_t *alldevs;
 	pcap_if_t *d;
@@ -240,28 +141,24 @@ char *select_adapter() {
 }
 
 int main(int argc, char ** argv) {
-	if(argc != 4) {
-		printf("Usage: bahamuth <host> <port> <(tcp|udp)>\n");
+	if(argc != 3) {
+		printf("Usage: bahamuth <host> <port>\n");
 		return 1;
 	}
-	//if(strcmp(argv[1],"localhost") == 0) {
-	//   mac = true;
-	//}
-	printf("Bahamuth client v0.0.4 (prototype) starting...\n");
+	printf("Bahamut engine SVN (prototype) starting...\n");
 	char *dev = select_adapter();
 	if(dev != NULL) {
 		interf = new Interface(dev);
 		printf("Opening interface: %s\n", dev);
 		if(interf->open()) {
-			sock = new Socket(argv[1],atoi(argv[2]), argv[3]);
+			sock = new Socket(argv[1],atoi(argv[2]),"udp");
 			printf("Trying to connect to %s:%s\n", argv[1], argv[2]);
 			if(sock->connectSocket()) {
 				printf("Connection established to %s:%s\n", argv[1], argv[2]);
-				interf->setFilter();
 				printf("Starting inject thread...\n");
-				pthread_create(&th, NULL, &thread_loop, NULL);
+				pthread_create(&th, NULL, &inject_thread, NULL);
 				printf("Starting capture thread...\n");
-				interf->captureLoop(&packet_callback);
+				interf->captureLoop(&capture_callback);
 				printf("Closing connection with host\n");
 				sock->closeSocket();
 			} else {

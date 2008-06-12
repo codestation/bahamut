@@ -8,10 +8,11 @@
 *	online features.
 *
 *File Description:
-*	Network interface functions
+*	A simple vector to help organize the device list
 *Special Notes:
-*	TODO: use the native functions for every platform
-* 		: make a tun/tap alternative
+*	TODO: Only holds 4 Devices MAX, no index bounds checking implemented yet
+* 	It uses a static vector to dont deal with dynamic memory alloc (for now)
+* 	(I know, its ugly, but its faster and simple)
 *
 *Copyright Stuff:
 *   This program is free software: you can redistribute it and/or modify
@@ -28,33 +29,24 @@
 *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef INTERFACE_H_
-#define INTERFACE_H_
 
-#include <pcap.h>
-#include <string.h>
-#include "DeviceContainer.h"
+#ifndef DEVICECONTAINER_H_
+#define DEVICECONTAINER_H_
 
-class Interface {
+#include "DeviceInfo.h"
+
+class DeviceContainer
+{
 private:
-	char *dev;
-	pcap_t *handle;
-	pcap_pkthdr* packet_header;
-	char errbuf[PCAP_ERRBUF_SIZE];
-	struct bpf_program fp;
-
+	DeviceInfo *dev[4];
 public:
-	Interface(const char *dev);
-	bool open();
-	void close();
-	int captureLoop(pcap_handler packet_func);
-	int capture(const void *packet_data, size_t size);
-	int inject(const u_char *packet_data, size_t size);
-	int compileFilter(char *filter);
-	int updateFilters(DeviceContainer *cont);
-	int setFilter();
-	void breakLoop();
-	virtual ~Interface();
+	DeviceContainer();
+	bool addDevice(DeviceInfo *psp);
+	bool removeDevice(const u_char *mac);
+	DeviceInfo *getDevice(const u_char *mac);
+	DeviceInfo *getDeviceAtPos(int pos);
+	int deviceCount();
+	virtual ~DeviceContainer();
 };
 
-#endif /*INTERFACE_H_*/
+#endif /*DEVICECONTAINER_H_*/

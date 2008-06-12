@@ -1,0 +1,6 @@
+*Comment the rest of the source code (yes i am lazy >.>)
+*Add more error checking functions
+*Move the select_adapter function to Interface class
+*Complete the Server and ServerSocket functions
+*Make a main server (to login, room creation, etc)
+*More to come when all of the above is ready :)
