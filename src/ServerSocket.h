@@ -40,12 +40,15 @@ class ServerSocket {
 private:
 	int sock;
 	int port;
-	sockaddr_in client;
+	int proto;
+	sockaddr_in server;
 
 public:
-	ServerSocket();
+	ServerSocket(int port, const char *proto);
 	bool bindSocket();
 	bool listenSocket(int max);
+	int receive(PspPacket *packet);
+	int send(PspPacket *packet);
 	Socket *acceptSocket();
 	virtual ~ServerSocket();
 };

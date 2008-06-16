@@ -33,6 +33,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 class PspPacket {
 private:	
@@ -42,13 +44,14 @@ private:
 	struct eth_packet {
 		u_char dst_mac[6];
 		u_char src_mac[6];
-		u_char data[1478];
+		u_char data[1474];
 	};
 	#pragma pack(pop)
 	
 	#pragma pack(push,1)
 	struct packet_container {
 		u_char header[2];
+		u_int id;
 		u_int counter;
 		u_int size;
 		eth_packet data;
@@ -56,15 +59,19 @@ private:
 	#pragma pack(pop)
 
 	struct packet_container *packet;
-	//u_char *packet_data;
+	in_addr_t ip_addr;
+	int port;
+	//temporary buffer to hold the MAC string
+	char mac_str[18];
 public:
 	PspPacket();
-	int getPacketCounter();
+	u_int getPacketCounter();
 	int getPacketSize();
 	int getPayloadSize();
 	void setPayloadSize(int size);
 	const u_char *getSrcMAC();
 	const char *getScrMACstr();
+	char *getIPstr();
 	const u_char *getDstMAC();
 	const char *getDstMACstr();
 	const u_char *getPayload();
@@ -74,6 +81,12 @@ public:
 	void setPacketCounter(int count);
 	u_char *getPacketData();
 	bool checkHeader();
+	void setIP(in_addr_t ip);
+	void setPort(int port);
+	in_addr_t getIP();
+	int getPort();
+	void setID(u_int id);
+	u_int getID();
 	virtual ~PspPacket();
 };
 

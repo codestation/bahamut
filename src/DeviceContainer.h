@@ -44,6 +44,7 @@ public:
 	bool addDevice(DeviceInfo *psp);
 	bool removeDevice(const u_char *mac);
 	DeviceInfo *getDevice(const u_char *mac);
+	DeviceInfo *getDevice(in_addr_t ip, int port);
 	DeviceInfo *getDeviceAtPos(int pos);
 	int deviceCount();
 	virtual ~DeviceContainer();

@@ -31,23 +31,60 @@
 
 DeviceInfo::DeviceInfo(const u_char *psp_mac) {
 	count = 0;
+	port = 0;
+	ip_addr = 0;
 	memcpy(mac, psp_mac, 6);
 }
-const u_char *DeviceInfo::getMAC() {
+
+DeviceInfo::DeviceInfo(in_addr_t ip, int port) {
+	count = 0;
+	this->port = port;
+	ip_addr = ip;
+	memset(mac, 6, 0);
+}
+
+inline const u_char *DeviceInfo::getMAC() {
 	return mac;
 }
 
-const char *DeviceInfo::getMACstr() {
-	char *mac_str = new char[18];
+char *DeviceInfo::getMACstr() {
 	sprintf(mac_str,"%.2x:%.2x:%.2x:%.2x:%.2x:%.2x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 	return mac_str;
+}
+
+char *DeviceInfo::getIPstr() {
+	in_addr tmp;
+	tmp.s_addr = ip_addr;
+	return inet_ntoa(tmp);
 }
 
 void DeviceInfo::setMAC(const u_char *psp_mac) {
 	memcpy(mac, psp_mac, 6);
 }
-int DeviceInfo::getPacketCounter() {
+u_int DeviceInfo::getPacketCounter() {
 	return count;
+}
+void DeviceInfo::setRandomID() {
+	id = rand();
+}
+void DeviceInfo::setID(u_int newid) {
+	id = newid;
+}
+u_int DeviceInfo::getID() {
+	return id;
+}
+
+void DeviceInfo::setIP(in_addr_t ip) {
+	ip_addr = ip;
+}
+void DeviceInfo::setPort(int port) {
+	this->port = port;
+}
+in_addr_t DeviceInfo::getIP() {
+	return ip_addr;
+}
+int DeviceInfo::getPort() {
+	return port;
 }
 void DeviceInfo::setPacketCounter(int newcount) {
 	count = newcount;

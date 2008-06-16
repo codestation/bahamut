@@ -33,14 +33,17 @@ PspPacket::PspPacket() {
 	packet = new packet_container;
 	packet->header[0] = 'M';
 	packet->header[1] = 'H';
+	packet->id = 0;
 	packet->counter = 0;
-	packet->size = 1490;
+	packet->size = 1486;
+	port = 0;
+	ip_addr = 0;
 }
-int PspPacket::getPacketCounter() {
+u_int PspPacket::getPacketCounter() {
 	return packet->counter;
 }
 int PspPacket::getPacketSize() {
-	return packet->size + 10;
+	return packet->size + 14;
 }
 void PspPacket::setPayloadSize(int size) {
 	packet->size = size;
@@ -52,7 +55,6 @@ const u_char *PspPacket::getSrcMAC() {
 	return packet->data.src_mac;
 }
 const char *PspPacket::getScrMACstr() {
-	char *mac_str = new char[18];
 	u_char *mac = packet->data.src_mac;
 	sprintf(mac_str,"%.2x:%.2x:%.2x:%.2x:%.2x:%.2x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 	return mac_str;
@@ -61,7 +63,6 @@ const u_char *PspPacket::getDstMAC() {
 	return packet->data.dst_mac;
 }
 const char *PspPacket::getDstMACstr() {
-	char *mac_str = new char[18];
 	u_char *mac = packet->data.dst_mac;
 	sprintf(mac_str,"%.2x:%.2x:%.2x:%.2x:%.2x:%.2x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 	return mac_str;
@@ -88,6 +89,31 @@ u_char *PspPacket::getPacketData() {
 bool PspPacket::checkHeader() {
 	return packet->header[0] == 'M' && packet->header[1] == 'H';
 }
+void PspPacket::setIP(in_addr_t ip) {
+	ip_addr = ip;
+}
+void PspPacket::setPort(int port) {
+	this->port = port;
+}
+in_addr_t PspPacket::getIP() {
+	return ip_addr;
+}
+int PspPacket::getPort() {
+	return port;
+}
+void PspPacket::setID(u_int id) {
+	packet->id = id;
+}
+u_int PspPacket::getID() {
+	return packet->id;
+}
+
+char *PspPacket::getIPstr() {
+	in_addr tmp;
+	tmp.s_addr = ip_addr;
+	return inet_ntoa(tmp);
+}
+
 PspPacket::~PspPacket() {
 	delete packet;
 }

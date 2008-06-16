@@ -35,6 +35,10 @@
 #include <string.h>
 #include "DeviceContainer.h"
 
+#define PSP_FAT_MAC_RULE  "(ether[0] = 0x00 && ether[1] = 0x16 && ether[2] = 0xFE)"
+#define PSP_SLIM_MAC_RULE "(ether[0] = 0x00 && ether[1] = 0x1C && ether[2] = 0x26)"
+#define PSP_N_SM_MAC_RULE "(ether[0] = 0x00 && ether[1] = 0x1D && ether[2] = 0xD9)"
+
 class Interface {
 private:
 	char *dev;
@@ -52,6 +56,7 @@ public:
 	int inject(const u_char *packet_data, size_t size);
 	int compileFilter(char *filter);
 	int updateFilters(DeviceContainer *cont);
+	char *initializeFilter(char *buffer);
 	int setFilter();
 	void breakLoop();
 	virtual ~Interface();

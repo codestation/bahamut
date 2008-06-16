@@ -6,8 +6,8 @@ OBJECTS=$(SOURCES:.cpp=.o)
 
 all: $(TARGET)
 
-$(TARGET): main.o Interface.o Socket.o PspPacket.o DeviceContainer.o DeviceInfo.o
-	$(CC) $(LDFLAGS) main.o Interface.o Socket.o PspPacket.o DeviceContainer.o DeviceInfo.o -o $(TARGET)
+$(TARGET): main.o Interface.o Socket.o PspPacket.o DeviceContainer.o DeviceInfo.o ServerSocket.o UDPServer.o
+	$(CC) $(LDFLAGS) main.o Interface.o Socket.o PspPacket.o DeviceContainer.o DeviceInfo.o ServerSocket.o UDPServer.o -o $(TARGET)
 
 main.o: main.cpp
 	$(CC) $(CFLAGS) main.cpp
@@ -26,6 +26,12 @@ DeviceContainer.o: DeviceContainer.cpp
 
 DeviceInfo.o: DeviceInfo.cpp
 	$(CC) $(CFLAGS) DeviceInfo.cpp
+	
+UDPServer.o: UDPServer.cpp
+	$(CC) $(CFLAGS) UDPServer.cpp
+	
+ServerSocket.o: ServerSocket.cpp
+	$(CC) $(CFLAGS) ServerSocket.cpp	
 
 clean:
 	rm -rf *o $(TARGET)

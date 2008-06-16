@@ -38,6 +38,7 @@
 */
 Interface::Interface(const char *dev) {
 	handle = NULL;
+	memset(&fp, sizeof(fp), 0);
 	this->dev = strdup(dev);
 }
 /*
@@ -116,24 +117,27 @@ int Interface::compileFilter(char *filter) {
  * Returns: 0 on success, -1 on error
 */
 int Interface::setFilter() {
-	return pcap_setfilter(handle, &fp);
-	
+	return pcap_setfilter(handle, &fp);	
+}
+
+char *Interface::initializeFilter(char *buffer) {
+	strcpy(buffer,PSP_FAT_MAC_RULE);
+	strcat(buffer, " or ");
+	strcat(buffer,PSP_SLIM_MAC_RULE);
+	strcat(buffer, " or ");
+	strcat(buffer,PSP_N_SM_MAC_RULE);
+	return buffer;
 }
 
 int Interface::updateFilters(DeviceContainer *cont) {
-	char str[1024];
-	bool last = false;
-	strcpy(str, "not ether src ");
+	return 0;
+	char str[4096];
+	initializeFilter(str);
 	for(int i = 0;i < 4;i++) {
 		DeviceInfo *dev = cont->getDeviceAtPos(i);
 		if(dev) {
-			if(last) {
-				strcat(str, " and not ether src ");
-			}
+			strcat(str, " and not ether src ");
 			strcat(str, dev->getMACstr());
-			last = true;
-		} else {
-			last = false;
 		}
 	}
 	if(compileFilter(str) != -1) {

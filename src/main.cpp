@@ -34,19 +34,35 @@
 #include "PspPacket.h"
 #include "DeviceInfo.h"
 #include "DeviceContainer.h"
+#include "UDPServer.h"
 pthread_t th;
 Socket *sock = NULL;
 Interface *interf = NULL;
+UDPServer *serv = NULL;
 bool flag = false;
 DeviceContainer *src_con = NULL;
 DeviceContainer *dst_con = NULL;
+PspPacket *cap_packet;
 
 void capture_callback(u_char* user, const struct pcap_pkthdr* packet_header, const u_char* packet_data) {
-	PspPacket packet;
-	packet.setPayload(packet_data, packet_header->len);
+	cap_packet->setPayload(packet_data, packet_header->len);
 	if(!flag) {
-		src_con->addDevice(new DeviceInfo(packet.getSrcMAC()));
-		if(sock->writeSocket(&packet) < 0) {
+		DeviceInfo *info = src_con->getDevice(cap_packet->getSrcMAC());
+		if(info == NULL) {
+			if(src_con->deviceCount() < 4) {
+				info = new DeviceInfo(cap_packet->getSrcMAC());
+				info->setRandomID();
+				src_con->addDevice(info);
+				printf("Registered new source device, MAC: %s, ID: %X\n", cap_packet->getScrMACstr(), info->getID());
+			} else {
+				printf("Cant add more than 4 source devices: %s\n", cap_packet->getScrMACstr());
+			}			
+		} else {
+			info->setPacketCounter(info->getPacketCounter() + 1);
+			cap_packet->setPacketCounter(info->getPacketCounter());
+		}
+		cap_packet->setID(info->getID());
+		if(sock->writeSocket(cap_packet) < 0) {
 			printf("Conection closed by host. Terminating capturing thread...\n");
 			flag = true;
 		}
@@ -65,11 +81,11 @@ void *inject_thread(void *arg) {
 		if(packet->checkHeader()) {
 			DeviceInfo *dev = dst_con->getDevice(packet->getSrcMAC());
 			if(dev == NULL) {
-				if(!dst_con->addDevice(new DeviceInfo(packet->getSrcMAC()))) {
-					printf("Cant add more than 4 devices: %s\n", packet->getScrMACstr());
-					continue;
-				} else {
-					printf("Registered new remote device, MAC: %s\n", packet->getDstMACstr());
+				if(dst_con->deviceCount() < 4) {
+					dev = new DeviceInfo(packet->getSrcMAC());
+					dst_con->addDevice(dev);
+					dev->setID(packet->getID());
+					printf("Registered new remote device, MAC: %s, ID %X\n", packet->getScrMACstr(), packet->getID());
 					printf("Updating filtering rules... ");
 					switch(interf->updateFilters(dst_con)) {
 					case 0:
@@ -81,11 +97,19 @@ void *inject_thread(void *arg) {
 					case -2:
 						printf("error while applying filter\n");
 					}
+				} else {
+					printf("Cant add more than 4 remote devices: %s\n", packet->getScrMACstr());
+					continue;
 				}
 			} else {
-				if(packet->getPacketCounter() <= dev->getPacketCounter()) {
-					printf("Packet arrives at wrong order. Discarding...");
-					continue;
+				if(dev->getID() != packet->getID()) {
+					printf("ID has changed (OLD: %X, NEW: %X), updating...\n", dev->getID(), packet->getID());
+					dev->setID(packet->getID());
+				} else {
+					if(packet->getPacketCounter() <= dev->getPacketCounter()) {
+						printf("Server: Packet arrives at wrong order (Expected > %i, Received = %i). Discarding..\n", dev->getPacketCounter(), packet->getPacketCounter());
+						continue;
+					}
 				}
 			}
 			dev->setPacketCounter(packet->getPacketCounter());
@@ -146,19 +170,43 @@ int main(int argc, char ** argv) {
 		return 1;
 	}
 	printf("Bahamut engine SVN (prototype) starting...\n");
+	srand(time(0));
 	char *dev = select_adapter();
 	if(dev != NULL) {
 		interf = new Interface(dev);
 		printf("Opening interface: %s\n", dev);
 		if(interf->open()) {
+			
+			if(strcmp(argv[1], "localhost") == 0) {
+				printf("Creating UDP server...\n");
+				serv = new UDPServer(atoi(argv[2]));
+				printf("Starting UDP server...\n");
+				serv->start();
+			}
+			
 			sock = new Socket(argv[1],atoi(argv[2]),"udp");
 			printf("Trying to connect to %s:%s\n", argv[1], argv[2]);
 			if(sock->connectSocket()) {
 				printf("Connection established to %s:%s\n", argv[1], argv[2]);
+				src_con = new DeviceContainer();
+				dst_con = new DeviceContainer();
+				printf("Adding default filters...");
+				switch(interf->updateFilters(dst_con)) {
+				case 0:
+					printf("done\n");
+					break;
+				case -1:
+					printf("error while compiling filter\n");
+					break;
+				case -2:
+					printf("error while applying filter\n");
+				}
 				printf("Starting inject thread...\n");
 				pthread_create(&th, NULL, &inject_thread, NULL);
 				printf("Starting capture thread...\n");
+				cap_packet = new PspPacket();
 				interf->captureLoop(&capture_callback);
+				delete cap_packet;
 				printf("Closing connection with host\n");
 				sock->closeSocket();
 			} else {
@@ -173,5 +221,9 @@ int main(int argc, char ** argv) {
 	printf("Bye ~nya!\n");
 	delete sock;
 	delete interf;
+	if(strcmp(argv[1], "localhost") == 0) {
+		serv->stop();
+		delete serv;
+	}
 	return 0;
 }

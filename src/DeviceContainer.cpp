@@ -32,7 +32,10 @@
 #include "DeviceContainer.h"
 
 DeviceContainer::DeviceContainer() {
-	memset(dev,sizeof(dev),0);
+	dev[0] = 0;
+	dev[1] = 0;
+	dev[2] = 0;
+	dev[3] = 0;
 }
 bool DeviceContainer::addDevice(DeviceInfo *psp) {
 	int i = 0;
@@ -69,6 +72,17 @@ DeviceInfo *DeviceContainer::getDevice(const u_char *mac) {
 	}
 	return NULL;
 }
+DeviceInfo *DeviceContainer::getDevice(in_addr_t ip, int port) {
+	int i = 0;
+	while(i < 4) {
+		if(dev[i] != NULL) {
+			if(dev[i]->getIP() == ip && dev[i]->getPort() == port)
+				return dev[i];
+		}
+		i++;
+	}
+	return NULL;
+}
 int DeviceContainer::deviceCount() {
 	int count = 0;
 	for(int i = 0;i < 4; i++)
@@ -80,6 +94,7 @@ int DeviceContainer::deviceCount() {
 DeviceInfo *DeviceContainer::getDeviceAtPos(int pos) {
 	return pos >=0 && pos < 4 ? dev[pos] : NULL;
 }
+
 DeviceContainer::~DeviceContainer() {
 	for(int i = 0;i < 4; i++)
 		if(dev[i] != NULL)

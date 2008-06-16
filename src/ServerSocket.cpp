@@ -29,19 +29,27 @@
 
 #include "ServerSocket.h"
 
-ServerSocket::ServerSocket()
-{
-}
-
-ServerSocket::~ServerSocket()
-{
+ServerSocket::ServerSocket(int port, const char *proto) {
+	sock = 0;
+	if(strcmp(proto,"tcp") == 0) {
+		this->proto = IPPROTO_TCP;
+	} else if (strcmp(proto,"udp") == 0) {
+		this->proto = IPPROTO_UDP;
+	} else {
+		this->proto = -1;
+	}
+	this->port = port;
 }
 
 bool ServerSocket::bindSocket() {
-	client.sin_family = AF_INET;
-	client.sin_port = htons(port);
-	client.sin_addr.s_addr = htonl (INADDR_ANY);
-	return bind( sock, (struct sockaddr *)&client, sizeof(client)) != -1;
+	if((sock = socket(PF_INET, proto == IPPROTO_TCP ? SOCK_STREAM : SOCK_DGRAM, proto)) >= 0) {
+		server.sin_family = AF_INET;
+		server.sin_port = htons(port);
+		server.sin_addr.s_addr = htonl (INADDR_ANY);
+		return bind( sock, (struct sockaddr *)&server, sizeof(server)) != -1;
+	} else {
+		return false;
+	}
 }
 
 bool ServerSocket::listenSocket(int max) {
@@ -49,7 +57,25 @@ bool ServerSocket::listenSocket(int max) {
 }
 
 Socket *ServerSocket::acceptSocket() {
-	socklen_t addrlen = sizeof(client);
-	int s = accept( sock, (struct sockaddr *)&client, &addrlen);
+	socklen_t addrlen = sizeof(server);
+	int s = accept( sock, (struct sockaddr *)&server, &addrlen);
 	return s != 0 ? new Socket(s) : 0;
+}
+
+int ServerSocket::receive(PspPacket *packet) {
+	socklen_t addrlen = sizeof(server);
+	int res = recvfrom( sock, packet->getPacketData(), packet->getPacketSize(), 0, (struct sockaddr *)&server, &addrlen);
+	packet->setIP(server.sin_addr.s_addr);
+	packet->setPort(server.sin_port);
+	return res;
+}
+
+int ServerSocket::send(PspPacket *packet) {
+	server.sin_port = packet->getPort();
+	server.sin_addr.s_addr = packet->getIP();
+	return sendto( sock, packet->getPacketData(), packet->getPacketSize(), 0, (struct sockaddr *)&server,sizeof(server));
+}
+
+ServerSocket::~ServerSocket() {
+
 }

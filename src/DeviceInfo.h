@@ -33,17 +33,33 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 class DeviceInfo {
 private:
 	u_char mac[6];
-	int count;
+	u_int count;
+	in_addr_t ip_addr;
+	int port;
+	u_int id;
+	//temporary buffer to hold the MAC string
+	char mac_str[18];	
 public:
 	DeviceInfo(const u_char *psp_mac);
+	DeviceInfo(in_addr_t ip, int port);
 	const u_char *getMAC();
-	const char *getMACstr();
+	char *getMACstr();
+	char *getIPstr();
 	void setMAC(const u_char *mac);
-	int getPacketCounter();
+	void setIP(in_addr_t ip);
+	void setPort(int port);
+	in_addr_t getIP();
+	int getPort();
+	u_int getPacketCounter();
+	void setRandomID();
+	void setID(u_int id);
+	u_int getID();
 	bool compareMAC(const u_char *mac);
 	void setPacketCounter(int newcount);
 	virtual ~DeviceInfo();
