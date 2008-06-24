@@ -1,14 +1,15 @@
 CC = g++
 TARGET = bahamut-engine
-CFLAGS = -Wall
-LIBS = -lpcap -lpthread
+CFLAGS = -Wall -mno-cygwin
+LIB_PATH = lib
+LIBS = -L $(LIB_PATH) -lwpcap -lwsock32
 OBJS = main.o Interface.o Socket.o PspPacket.o DeviceContainer.o DeviceInfo.o ServerSocket.o UDPServer.o
 
 all: $(OBJS)
 	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS) $(LIBS)
 
-.cpp.o:
+.c.o:
 	$(CC) $(CFLAGS) -c $*.cpp
 
 clean:
-	rm -f ${OBJS} $(TARGET)
+	-del -f ${OBJS} $(TARGET)
