@@ -68,7 +68,7 @@ const char *PspPacket::getDstMACstr() {
 	return mac_str;
 }
 const u_char *PspPacket::getPayload() {
-	return packet->data.data;
+	return (u_char *)&packet->data;
 }
 void PspPacket::setPayload(const u_char *data, size_t size) {
 	memcpy(&packet->data, data, size);
