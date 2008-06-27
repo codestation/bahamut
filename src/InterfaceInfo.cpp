@@ -20,49 +20,20 @@
 
 /*
  * File Description:
- *     UDP Server engine
+ *     Holds the name/description of a network interface
  * Special Notes:
- *     TODO: remove debug messages, more error checking
+ *		TODO: none yet
  */
 
-#ifndef UDPSERVER_H_
-#define UDPSERVER_H_
+#include "InterfaceInfo.h"
 
-#ifdef _WIN32
-#include <windows.h>
-#include <process.h>
-#else
-#include <pthread.h>
-#endif
-#include <time.h>
-#include "PspPacket.h"
-#include "ServerSocket.h"
-#include "List.h"
+InterfaceInfo::InterfaceInfo(char *n, char *d) {
+	name = strdup(n);
+	desc = d ? strdup(d) : 0;
+}
 
-class UDPServer {
-private:
-#ifdef _WIN32
-	unsigned int th;
-#else
-	pthread_t th;
-#endif
-	int port;
-	static u_int server_id;
-	static bool loop_flag;
-#ifdef _WIN32
-	static void run(void *);
-#else
-	static void *run(void *);
-#endif
-	int receive(PspPacket *packet);
-	int send(PspPacket *packet);
-	static int compareFunc(void *, void *);
-	static void deleteFunc(void *);
-public:
-	UDPServer(int port);
-	void start();
-	void stop();
-	virtual ~UDPServer();
-};
-
-#endif /*UDPSERVER_H_*/
+InterfaceInfo::~InterfaceInfo() {
+	free(name);
+	if(desc)
+		free(desc);
+}

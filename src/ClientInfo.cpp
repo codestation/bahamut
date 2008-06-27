@@ -20,34 +20,56 @@
 
 /*
  * File Description:
- *     Holds some device info (MAC address, current packet count)
+ *     Holds some client info (ip addres:port and client ID)
  * Special Notes:
  *     TODO: none yet
  */
 
-#include "DeviceInfo.h"
+#include "ClientInfo.h"
 
-DeviceInfo::DeviceInfo(const u_char *psp_mac) {
-	memcpy(mac, psp_mac, 6);
+ClientInfo::ClientInfo() {
+	memset(&client, 0, sizeof(client));
+	id = 0;
 }
 
-inline const u_char *DeviceInfo::getMAC() {
-	return mac;
+sockaddr_in *ClientInfo::getSocketInfo() {
+	return &client;
 }
 
-char *DeviceInfo::getMACstr() {
-	sprintf(mac_str,"%.2x:%.2x:%.2x:%.2x:%.2x:%.2x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-	return mac_str;
+int ClientInfo::getSocketSize() {
+	return sizeof(client);
 }
 
-void DeviceInfo::setMAC(const u_char *psp_mac) {
-	memcpy(mac, psp_mac, 6);
+ClientInfo::ClientInfo(ClientInfo *info) {
+	memcpy(&client, info->getSocketInfo(), sizeof(client));
+	id = info->id;
 }
 
-bool DeviceInfo::compareMAC(const u_char *mac) {
-	return memcmp(this->mac, mac, 6) == 0;
+void ClientInfo::setID(u_int cid) {
+	id = cid;
+}
+u_int ClientInfo::getID() {
+	return id;
 }
 
-DeviceInfo::~DeviceInfo() {
+int ClientInfo::getPort() {
+	return client.sin_port;
+}
+
+char *ClientInfo::getIPstr() {
+	return inet_ntoa(client.sin_addr);
+}
+
+void ClientInfo::setCounter(u_int c) {
+	counter = c;
+}
+u_int ClientInfo::getCounter() {
+	return counter;
+}
+bool ClientInfo::compareTo(ClientInfo *info) {
+	return !memcmp(&client, info->getSocketInfo(), sizeof(client));
+}
+
+ClientInfo::~ClientInfo() {
 
 }

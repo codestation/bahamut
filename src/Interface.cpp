@@ -1,32 +1,30 @@
 /*
-*Project Name: Bahamut
-* 
-*Programmers: Codestation, ZackVixACD
-* 
-*Project Descrption: The project bahamut is a full ad-hoc tunneling
-*	software to be used by the Playstation Portable (PSP) to emulate 
-*	online features.
-*
-*File Description:
-*	Network interface functions
-*Special Notes:
-*	TODO: use the native functions for every platform
-* 		: make a tun/tap alternative
-*
-*Copyright Stuff:
-*   This program is free software: you can redistribute it and/or modify
-*   it under the terms of the GNU General Public License as published by
-*   the Free Software Foundation, either version 3 of the License, or
-*   (at your option) any later version.
-* 
-*   This program is distributed in the hope that it will be useful,
-*   but WITHOUT ANY WARRANTY; without even the implied warranty of
-*   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*   GNU General Public License for more details.
-* 
-*  You should have received a copy of the GNU General Public License
-*   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ *  Project Bahamut: full ad-hoc tunneling software to be used by the
+ *  Playstation Portable (PSP) to emulate online features.
+ *
+ *  Copyright (C) 2008  Project Bahamut team
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/*
+ * File Description:
+ *     Network interface functions
+ * Special Notes:
+ *		TODO: use the native functions for every platform
+ * 			: make a tun/tap alternative
+ */
 
 #include "Interface.h"
 
@@ -59,7 +57,11 @@ Interface::~Interface() {
  * Returns: true if the interface is open, false otherwise
 */
 bool Interface::open() {
-	return (handle = pcap_open_live(dev, BUFSIZ, 1, 1000, errbuf)) != NULL;
+#ifdef _WIN32
+	return (handle = pcap_open(dev, BUFSIZ, PCAP_OPENFLAG_PROMISCUOUS | PCAP_OPENFLAG_NOCAPTURE_LOCAL | PCAP_OPENFLAG_MAX_RESPONSIVENESS, 500, NULL, errbuf)) != NULL;
+#else
+	return (handle = pcap_open_live(dev, BUFSIZ, 1, 500, errbuf)) != NULL;
+#endif
 }
 
 /*
@@ -67,7 +69,7 @@ bool Interface::open() {
  * come back until breakLoop is called from another thread)
  * Parameters:
  * 		packet_func: a pointer of a function specified by pcap_handler
- * Returns: -1 if an error occurs, -2 if breakLoop was called 
+ * Returns: -1 if an error occurs, -2 if breakLoop was called
 */
 int Interface::captureLoop(pcap_handler packet_func) {
 	return pcap_loop ( handle, -1, packet_func, (u_char *)dev);
@@ -81,7 +83,10 @@ int Interface::captureLoop(pcap_handler packet_func) {
  * Returns: 0 if the packet was sent, -1 on error
 */
 int Interface::inject(const u_char *packet_data, size_t size) {
-	return pcap_sendpacket (handle, packet_data, size);
+	u_char *hola = new u_char[size];
+	memcpy(hola, packet_data, size);
+	return pcap_sendpacket (handle, hola, size);
+	//return pcap_sendpacket (handle, packet_data, size);
 }
 
 /*
@@ -106,7 +111,7 @@ int Interface::compileFilter(char *filter) {
 	bpf_u_int32 pcap_netmask;
 	bpf_u_int32 pcap_ip;
 	if(pcap_lookupnet(dev, &pcap_ip, &pcap_netmask, errbuf) == -1)
-		return -1;	
+		return -1;
 	return pcap_compile(handle, &fp, filter, 1, pcap_netmask);
 }
 
@@ -117,29 +122,41 @@ int Interface::compileFilter(char *filter) {
  * Returns: 0 on success, -1 on error
 */
 int Interface::setFilter() {
-	return pcap_setfilter(handle, &fp);	
+	return pcap_setfilter(handle, &fp);
 }
 
-char *Interface::initializeFilter(char *buffer) {
-	strcpy(buffer,PSP_FAT_MAC_RULE);
-	strcat(buffer, " or ");
-	strcat(buffer,PSP_SLIM_MAC_RULE);
-	strcat(buffer, " or ");
-	strcat(buffer,PSP_N_SM_MAC_RULE);
-	return buffer;
-}
+List *Interface::getAdapterList() {
+	List *lst = 0;
+	pcap_if_t *alldevs;
+	pcap_if_t *d;
+	char errbuf[PCAP_ERRBUF_SIZE];
 
+	if (pcap_findalldevs(&alldevs, errbuf) != -1) {
+		if(alldevs) {
+			lst = new List(0, delete_info);
+			for (d=alldevs; d; d=d->next)
+				lst->add(new InterfaceInfo(d->name, d->description));
+			pcap_freealldevs(alldevs);
+		}
+	}
+	return lst;
+}
+/*
 int Interface::updateFilters(DeviceContainer *cont) {
-	return 0;
 	char str[4096];
-	initializeFilter(str);
+	//initializeFilter(str);
+	bool flag = false;
+	strcpy(str, "not ether src ");
 	for(int i = 0;i < 4;i++) {
 		DeviceInfo *dev = cont->getDeviceAtPos(i);
 		if(dev) {
-			strcat(str, " and not ether src ");
+			if(flag)
+				strcat(str, " and not ether src ");
 			strcat(str, dev->getMACstr());
+			flag = true;
 		}
 	}
+	//printf(str);
 	if(compileFilter(str) != -1) {
 		if(setFilter() == -1) {
 			return -2;
@@ -148,9 +165,7 @@ int Interface::updateFilters(DeviceContainer *cont) {
 		return -1;
 	}
 	return 0;
-}
-
-
+}*/
 
 /*
  * Closes the interface
@@ -158,6 +173,10 @@ int Interface::updateFilters(DeviceContainer *cont) {
 		none
  * Returns: void
 */
+
+void Interface::delete_info(void *obj) {
+	delete (InterfaceInfo *)obj;
+}
 void Interface::close() {
 	if(handle) {
 		pcap_close(handle);

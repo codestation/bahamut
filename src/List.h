@@ -20,49 +20,36 @@
 
 /*
  * File Description:
- *     UDP Server engine
+ *     Generic list to store data (avoid using the bloated STL library :D )
  * Special Notes:
- *     TODO: remove debug messages, more error checking
+ *		TODO: some error checking
  */
 
-#ifndef UDPSERVER_H_
-#define UDPSERVER_H_
+#ifndef LIST_H_
+#define LIST_H_
 
-#ifdef _WIN32
-#include <windows.h>
-#include <process.h>
-#else
-#include <pthread.h>
-#endif
-#include <time.h>
-#include "PspPacket.h"
-#include "ServerSocket.h"
-#include "List.h"
-
-class UDPServer {
+class List {
 private:
-#ifdef _WIN32
-	unsigned int th;
-#else
-	pthread_t th;
-#endif
-	int port;
-	static u_int server_id;
-	static bool loop_flag;
-#ifdef _WIN32
-	static void run(void *);
-#else
-	static void *run(void *);
-#endif
-	int receive(PspPacket *packet);
-	int send(PspPacket *packet);
-	static int compareFunc(void *, void *);
-	static void deleteFunc(void *);
+	typedef int (*COMPARE_FUNC) (void *, void *);
+	typedef void (*DELETE_FUNC) (void *);
+	COMPARE_FUNC comp;
+	DELETE_FUNC del;
+	struct node {
+		void *obj;
+		node *next;
+	} *head, *iter;
 public:
-	UDPServer(int port);
-	void start();
-	void stop();
-	virtual ~UDPServer();
+	List(COMPARE_FUNC, DELETE_FUNC);
+	void add(void *item);
+	void *get(void *);
+	void *getByIndex(int i);
+	bool exist(void *);
+	bool remove(void *);
+	void clear();
+	void rewind();
+	void *next();
+	bool hasNext();
+	virtual ~List();
 };
 
-#endif /*UDPSERVER_H_*/
+#endif /*LIST_H_*/

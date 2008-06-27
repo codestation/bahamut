@@ -20,49 +20,44 @@
 
 /*
  * File Description:
- *     UDP Server engine
+ *     Holds some client info (ip addres:port and client ID)
  * Special Notes:
- *     TODO: remove debug messages, more error checking
+ *     TODO: none yet
  */
 
-#ifndef UDPSERVER_H_
-#define UDPSERVER_H_
+#ifndef CLIENTINFO_H_
+#define CLIENTINFO_H_
 
 #ifdef _WIN32
 #include <windows.h>
-#include <process.h>
+#include <winsock2.h>
 #else
-#include <pthread.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #endif
-#include <time.h>
-#include "PspPacket.h"
-#include "ServerSocket.h"
-#include "List.h"
 
-class UDPServer {
+#include <string.h>
+
+class ClientInfo {
 private:
-#ifdef _WIN32
-	unsigned int th;
-#else
-	pthread_t th;
-#endif
-	int port;
-	static u_int server_id;
-	static bool loop_flag;
-#ifdef _WIN32
-	static void run(void *);
-#else
-	static void *run(void *);
-#endif
-	int receive(PspPacket *packet);
-	int send(PspPacket *packet);
-	static int compareFunc(void *, void *);
-	static void deleteFunc(void *);
+	sockaddr_in client;
+	u_int id;
+	u_int counter;
 public:
-	UDPServer(int port);
-	void start();
-	void stop();
-	virtual ~UDPServer();
+	ClientInfo();
+	ClientInfo(ClientInfo *);
+	ClientInfo(in_addr ip, int port);
+	sockaddr_in *getSocketInfo();
+	int getSocketSize();
+	in_addr getIP();
+	int getPort();
+	void setID(u_int id);
+	u_int getID();
+	char *getIPstr();
+	void setCounter(u_int c);
+	u_int getCounter();
+	bool compareTo(ClientInfo *);
+	virtual ~ClientInfo();
 };
 
-#endif /*UDPSERVER_H_*/
+#endif /*CLIENTINFO_H_*/

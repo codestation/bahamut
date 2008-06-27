@@ -3,7 +3,7 @@ TARGET = bahamut-engine
 CFLAGS = -Wall -mno-cygwin
 LIB_PATH = lib
 LIBS = -L $(LIB_PATH) -lwpcap -lwsock32
-OBJS = main.o Interface.o Socket.o PspPacket.o DeviceContainer.o DeviceInfo.o ServerSocket.o UDPServer.o
+OBJS = main.o Interface.o Socket.o PspPacket.o DeviceInfo.o ServerSocket.o UDPServer.o ClientInfo.o DeviceBridge.o InterfaceInfo.o List.o
 
 all: $(OBJS)
 	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS) $(LIBS)
