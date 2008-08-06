@@ -1,5 +1,0 @@
-all:
-	cd src && make -f Makefile.win32 all
-
-clean:
-	cd src && make -f Makefile.win32 clean
