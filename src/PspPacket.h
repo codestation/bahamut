@@ -2,7 +2,7 @@
  *  Project Bahamut: full ad-hoc tunneling software to be used by the
  *  Playstation Portable (PSP) to emulate online features.
  *
- *  Copyright (C) 2008  Project Bahamut team
+ *  Copyright (C) 2008  Codestation
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,10 +30,8 @@
 
 #ifdef _WIN32
 #include <windows.h>
-#else
-#include <netinet/in.h>
-#include <arpa/inet.h>
 #endif
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -66,10 +64,12 @@ private:
 	//temporary buffer to hold the MAC string
 	char src_mac_str[18];
 	char dst_mac_str[18];
+	static const u_char broadcast_mac[];
 public:
 	PspPacket();
 	u_int getPacketCounter();
 	int getPacketSize();
+	int getMaxPacketSize();
 	int getPayloadSize();
 	void setPayloadSize(int size);
 	const u_char *getSrcMAC();
@@ -83,6 +83,7 @@ public:
 	void setPacketCounter(int count);
 	u_char *getPacketData();
 	bool checkHeader();
+	bool isBroadcast();
 	void setID(u_int id);
 	u_int getID();
 	virtual ~PspPacket();

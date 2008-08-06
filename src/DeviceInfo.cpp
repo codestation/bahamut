@@ -2,7 +2,7 @@
  *  Project Bahamut: full ad-hoc tunneling software to be used by the
  *  Playstation Portable (PSP) to emulate online features.
  *
- *  Copyright (C) 2008  Project Bahamut team
+ *  Copyright (C) 2008  Codestation
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -44,8 +44,8 @@ void DeviceInfo::setMAC(const u_char *psp_mac) {
 	memcpy(mac, psp_mac, 6);
 }
 
-bool DeviceInfo::compareMAC(const u_char *mac) {
-	return memcmp(this->mac, mac, 6) == 0;
+int DeviceInfo::compareMAC(const u_char *pmac) {
+	return memcmp(mac, pmac, 6);
 }
 
 DeviceInfo::~DeviceInfo() {

@@ -2,7 +2,7 @@
  *  Project Bahamut: full ad-hoc tunneling software to be used by the
  *  Playstation Portable (PSP) to emulate online features.
  *
- *  Copyright (C) 2008  Project Bahamut team
+ *  Copyright (C) 2008  Codestation
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -37,16 +37,23 @@
 #endif
 
 #include <string.h>
+#include "DeviceInfo.h"
+#include "List.h"
 
 class ClientInfo {
 private:
 	sockaddr_in client;
 	u_int id;
-	u_int counter;
+	u_int r_counter;
+	u_int s_counter;
+	List *psp;
+	static int compare_func(void *, void *);
+	static void delete_func(void *);
 public:
 	ClientInfo();
 	ClientInfo(ClientInfo *);
 	ClientInfo(in_addr ip, int port);
+	void reset();
 	sockaddr_in *getSocketInfo();
 	int getSocketSize();
 	in_addr getIP();
@@ -54,9 +61,14 @@ public:
 	void setID(u_int id);
 	u_int getID();
 	char *getIPstr();
-	void setCounter(u_int c);
-	u_int getCounter();
-	bool compareTo(ClientInfo *);
+	void setrCounter(u_int c);
+	u_int getrCounter();
+	void setsCounter(u_int c);
+	u_int getsCounter();
+	int compareTo(ClientInfo *);
+	bool addDevice(const u_char *mac);
+	bool findDevice(const u_char *mac);
+	void clearDevices();
 	virtual ~ClientInfo();
 };
 

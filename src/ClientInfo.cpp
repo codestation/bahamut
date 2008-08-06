@@ -2,7 +2,7 @@
  *  Project Bahamut: full ad-hoc tunneling software to be used by the
  *  Playstation Portable (PSP) to emulate online features.
  *
- *  Copyright (C) 2008  Project Bahamut team
+ *  Copyright (C) 2008  Codestation
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,6 +30,16 @@
 ClientInfo::ClientInfo() {
 	memset(&client, 0, sizeof(client));
 	id = 0;
+	r_counter = 0;
+	s_counter = 0;
+	psp = new List(compare_func, delete_func);
+}
+
+void ClientInfo::reset() {
+	memset(&client, 0, sizeof(client));
+	id = 0;
+	r_counter = 0;
+	s_counter = 0;
 }
 
 sockaddr_in *ClientInfo::getSocketInfo() {
@@ -43,6 +53,9 @@ int ClientInfo::getSocketSize() {
 ClientInfo::ClientInfo(ClientInfo *info) {
 	memcpy(&client, info->getSocketInfo(), sizeof(client));
 	id = info->id;
+	r_counter = 0;
+	s_counter = 0;
+	psp = new List(compare_func, delete_func);
 }
 
 void ClientInfo::setID(u_int cid) {
@@ -60,16 +73,46 @@ char *ClientInfo::getIPstr() {
 	return inet_ntoa(client.sin_addr);
 }
 
-void ClientInfo::setCounter(u_int c) {
-	counter = c;
+void ClientInfo::setrCounter(u_int c) {
+	r_counter = c;
 }
-u_int ClientInfo::getCounter() {
-	return counter;
+u_int ClientInfo::getrCounter() {
+	return r_counter;
 }
-bool ClientInfo::compareTo(ClientInfo *info) {
-	return !memcmp(&client, info->getSocketInfo(), sizeof(client));
+void ClientInfo::setsCounter(u_int c) {
+	s_counter = c;
+}
+u_int ClientInfo::getsCounter() {
+	return s_counter;
+}
+int ClientInfo::compareTo(ClientInfo *info) {
+	return memcmp(&client, info->getSocketInfo(), sizeof(client));
+}
+
+bool ClientInfo::addDevice(const u_char *mac) {
+	if(!psp->exist((void *)mac)) {
+		psp->add(new DeviceInfo(mac));
+		return true;
+	}
+	return false;
+}
+
+bool ClientInfo::findDevice(const u_char *mac) {
+	return psp->exist((void *)mac);
+}
+
+int ClientInfo::compare_func(void *obj, void *item) {
+	return ((DeviceInfo *)obj)->compareMAC((u_char *)item);
+}
+
+void ClientInfo::delete_func(void *obj) {
+	delete ((DeviceInfo *)obj);
+}
+
+void ClientInfo::clearDevices() {
+	psp->clear();
 }
 
 ClientInfo::~ClientInfo() {
-
+	delete psp;
 }

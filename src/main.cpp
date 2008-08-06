@@ -2,7 +2,7 @@
  *  Project Bahamut: full ad-hoc tunneling software to be used by the
  *  Playstation Portable (PSP) to emulate online features.
  *
- *  Copyright (C) 2008  Project Bahamut team
+ *  Copyright (C) 2008  Codestation
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -44,24 +44,33 @@ void exit_signal(int signal) {
 		bridge->removeBridge();
 	}
 }
-PspPacket packet;
-int capture_func(const u_char *data, u_int len) {
-	packet.setPayload(data, len);
-	const u_char *mac = packet.getSrcMAC();
-	if((mac[0] == 0x0 && mac[1] == 0x11 && mac[2] == 0x22) || (mac[0] == 0 && mac[1] == 0x66 && mac[2] == 0x77))
-		return 0;
-	else
-		return 1;
+
+int capture_func(const u_char *mac, u_int len) {
+	u_int manufacturer = (mac[6] << 16) | (mac[7] << 8) | mac[8];
+	return (manufacturer == 0x001C26 || manufacturer == 0x001DD9 || manufacturer == 0x0016FE) ? 0 : 1;
+	//return (manufacturer == 0x001C26 || manufacturer == 0x001DD9 || manufacturer == 0x00197D) ? 0 : 1;
 }
+/*
+int inject_func(PspPacket *packet) {
+	total_received++;
+	return 0;
+}*/
+
+
 
 int main(int argc, char ** argv) {
 	int n;
+	bool order = true;
 	char *dev;
-	if(argc != 3) {
-		printf("Usage: bahamuth <host> <port>\n");
+	if(argc < 3) {
+		printf("Usage: bahamuth <host> <port> (disableorder)\n");
 		return 1;
 	}
-	printf("Bahamut engine SVN (prototype) starting...\n");
+	if(argc == 4 && !strcmp(argv[3], "disableorder")) {
+		order = false;
+		printf("Packet ordering disabled.\n");
+	}
+	printf("Bahamut engine SVN r26 starting...\n");
 
 	List *lst = Interface::getAdapterList();
 	if(!lst) {
@@ -71,15 +80,23 @@ int main(int argc, char ** argv) {
 	int i = 0;
 	while(lst->hasNext()) {
 		InterfaceInfo *inf = (InterfaceInfo *)lst->next();
-		printf("%i) %s [%s]\n", i++, inf->name, inf->desc);
+#ifdef _WIN32
+		printf("%i) %s\n", i++, inf->desc);
+#else
+		printf("%i) %s\n", i++, inf->name);
+#endif
 	}
+	printf("%i) Dedicated server (no bridge)\n", i++);
 	printf("Select your device by number (0-%i): ", i - 1);
 	scanf("%i", &n);
 	if(n < 0 || n > (i-1)) {
 		printf("\nInvalid selection. Exiting...\n");
 		return 1;
 	} else {
-		dev = strdup(((InterfaceInfo *)lst->getByIndex(n))->name);
+		if(n == (i-1))
+			dev = NULL;
+		else
+			dev = strdup(((InterfaceInfo *)lst->getByIndex(n))->name);
 	}
 	delete lst;
 
@@ -88,19 +105,28 @@ int main(int argc, char ** argv) {
 
 	if(strcmp(argv[1], "localhost") == 0) {
 		printf("Creating UDP server...\n");
-		serv = new UDPServer(atoi(argv[2]));
+		serv = new UDPServer(atoi(argv[2]), order);
 		printf("Starting UDP server...\n");
 		serv->start();
 	}
-
-	bridge = new DeviceBridge();
-	//bridge->registerCaptureCallback(capture_func);
-	printf("Making bridge %s <==> %s:%s\n", dev, argv[1], argv[2]);
-	bridge->makeBridge( dev, argv[1], atoi(argv[2]));
-	printf("Bridge closed. Freeing resources\n");
-	free(dev);
+	if(dev) {
+		bridge = new DeviceBridge(order);
+		bridge->registerCaptureCallback(capture_func);
+		//bridge->registerInjectCallback(inject_func);
+		printf("Making bridge wifi <==> %s:%s\n", argv[1], argv[2]);
+		bridge->makeBridge( dev, argv[1], atoi(argv[2]));
+		printf("Bridge closed. Freeing resources\n");
+		free(dev);
+		delete bridge;
+	}
 	if(strcmp(argv[1], "localhost") == 0) {
 		serv->stop();
+		printf("Waiting for server to finish...\n");
+#ifdef _WIN32
+		Sleep(1000 * 2);
+#else
+		sleep(2);
+#endif
 		delete serv;
 	}
 	return 0;

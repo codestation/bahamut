@@ -2,7 +2,7 @@
  *  Project Bahamut: full ad-hoc tunneling software to be used by the
  *  Playstation Portable (PSP) to emulate online features.
  *
- *  Copyright (C) 2008  Project Bahamut team
+ *  Copyright (C) 2008  Codestation
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -102,7 +102,11 @@ Socket::Socket(int sock) {
  * Returns: true on sucess, false otherwise
 */
 bool Socket::connectSocket() {
-	if((sock = socket(PF_INET, proto == IPPROTO_TCP ? SOCK_STREAM : SOCK_DGRAM, proto)) >= 0) {
+	if((sock = socket(PF_INET, proto == IPPROTO_TCP ? SOCK_STREAM : SOCK_DGRAM, 0)) >= 0) {
+		//struct timeval tv;
+		//tv.tv_sec = 2;
+		//tv.tv_usec = 0;
+		//setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(timeval));
 		memset(&client, 0, sizeof(client));
 		client.sin_family = AF_INET;
 		client.sin_port = htons(port);
@@ -139,11 +143,7 @@ ssize_t Socket::readSocket(char *buffer, size_t size) {
  * Returns: (>= 0) number of bytes received, -1 on error
 */
 ssize_t Socket::readSocket(PspPacket *packet) {
-	int res = recv(sock, (char *)packet->getPacketData(), packet->getPacketSize(), 0);
-	if(res >= 0) {
-		packet->setPayloadSize(res);
-	}
-	return res;
+	return recv(sock, (char *)packet->getPacketData(), packet->getMaxPacketSize(), 0);
 }
 
 /*

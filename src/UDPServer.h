@@ -2,7 +2,7 @@
  *  Project Bahamut: full ad-hoc tunneling software to be used by the
  *  Playstation Portable (PSP) to emulate online features.
  *
- *  Copyright (C) 2008  Project Bahamut team
+ *  Copyright (C) 2008  Codestation
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -49,6 +49,8 @@ private:
 	int port;
 	static u_int server_id;
 	static bool loop_flag;
+	static bool order;
+	static ServerSocket *sock;
 #ifdef _WIN32
 	static void run(void *);
 #else
@@ -59,7 +61,7 @@ private:
 	static int compareFunc(void *, void *);
 	static void deleteFunc(void *);
 public:
-	UDPServer(int port);
+	UDPServer(int port, bool packet_ordering = true);
 	void start();
 	void stop();
 	virtual ~UDPServer();

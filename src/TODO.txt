@@ -1,6 +1,3 @@
 * Comment the rest of the source code (yes i am lazy >.>)
-* Add more error checking functions
-* Change the head comments to a more standar one (Maybe the one indicated
-  in the GPL licence >.>)
 * Make a main server (to login, room creation, etc)
 * More to come when all of the above is ready :)

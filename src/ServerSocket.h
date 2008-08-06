@@ -2,7 +2,7 @@
  *  Project Bahamut: full ad-hoc tunneling software to be used by the
  *  Playstation Portable (PSP) to emulate online features.
  *
- *  Copyright (C) 2008  Project Bahamut team
+ *  Copyright (C) 2008  Codestation
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -33,13 +33,13 @@
 #include <windows.h>
 #include <winsock2.h>
 #else
-#include <netdb.h>
 #include <unistd.h>
+#include <netdb.h>
 #include <netinet/in.h>
 #endif
 
 #include <string.h>
-#include "Socket.h"
+#include "PspPacket.h"
 #include "ClientInfo.h"
 
 class ServerSocket {
@@ -50,14 +50,20 @@ private:
 
 #ifdef _WIN32
 	typedef int socklen_t;
+	static bool init;
 #endif
 
 public:
 	ServerSocket(int port, const char *proto);
+#ifdef _WIN32
+	bool WSAStart();
+	void WSAClean();
+#endif
 	bool bindSocket();
 	bool listenSocket(int max);
 	int receive(PspPacket *packet, ClientInfo *info);
 	int send(PspPacket *packet, ClientInfo *info);
+	void closeSocket();
 	virtual ~ServerSocket();
 };
 

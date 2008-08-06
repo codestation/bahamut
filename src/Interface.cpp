@@ -2,7 +2,7 @@
  *  Project Bahamut: full ad-hoc tunneling software to be used by the
  *  Playstation Portable (PSP) to emulate online features.
  *
- *  Copyright (C) 2008  Project Bahamut team
+ *  Copyright (C) 2008  Codestation
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -83,10 +83,7 @@ int Interface::captureLoop(pcap_handler packet_func) {
  * Returns: 0 if the packet was sent, -1 on error
 */
 int Interface::inject(const u_char *packet_data, size_t size) {
-	u_char *hola = new u_char[size];
-	memcpy(hola, packet_data, size);
-	return pcap_sendpacket (handle, hola, size);
-	//return pcap_sendpacket (handle, packet_data, size);
+	return pcap_sendpacket (handle, packet_data, size);
 }
 
 /*
@@ -176,6 +173,10 @@ int Interface::updateFilters(DeviceContainer *cont) {
 
 void Interface::delete_info(void *obj) {
 	delete (InterfaceInfo *)obj;
+}
+
+const char *Interface::getLastError() {
+	return errbuf;
 }
 void Interface::close() {
 	if(handle) {

@@ -2,7 +2,7 @@
  *  Project Bahamut: full ad-hoc tunneling software to be used by the
  *  Playstation Portable (PSP) to emulate online features.
  *
- *  Copyright (C) 2008  Project Bahamut team
+ *  Copyright (C) 2008  Codestation
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -78,7 +78,7 @@ bool List::remove(void *obj) {
 	if(head) {
 		node *curr = head;
 		node *prev = head;
-		while(curr->next) {
+		while(curr) {
 			if(!comp(curr->obj, obj)) {
 				prev->next = curr->next;
 				if(head == curr)
@@ -93,6 +93,16 @@ bool List::remove(void *obj) {
 		}
 	}
 	return false;
+}
+
+int List::count() {
+	node *curr = head;
+	int c = 0;
+	while(curr) {
+		curr = curr->next;
+		c++;
+	}
+	return c;
 }
 
 
