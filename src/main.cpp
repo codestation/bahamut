@@ -88,8 +88,8 @@ int main(int argc, char ** argv) {
 	}
 	printf("%i) Dedicated server (no bridge)\n", i++);
 	printf("Select your device by number (0-%i): ", i - 1);
-	scanf("%i", &n);
-	if(n < 0 || n > (i-1)) {
+	int val = scanf("%i", &n);
+	if(val != 1 || n < 0 || n > (i-1)) {
 		printf("\nInvalid selection. Exiting...\n");
 		return 1;
 	} else {
