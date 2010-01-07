@@ -36,7 +36,7 @@
 */
 Interface::Interface(const char *dev) {
 	handle = NULL;
-	memset(&fp, sizeof(fp), 0);
+	memset(&fp, 0, sizeof(fp));
 	this->dev = strdup(dev);
 }
 /*
