@@ -39,12 +39,14 @@
 
 class DeviceInfo {
 private:
+	u_int uid;
 	u_char mac[6];
 	//temporary buffer to hold the MAC string
 	char mac_str[18];
 public:
-	DeviceInfo(const u_char *psp_mac);
+	DeviceInfo(const u_char *psp_mac, u_int uid);
 	const u_char *getMAC();
+	u_int getUID();
 	char *getMACstr();
 	void setMAC(const u_char *mac);
 	int compareMAC(const u_char *mac);

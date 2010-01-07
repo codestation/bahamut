@@ -37,6 +37,7 @@ u_int DeviceBridge::server_id = 0;
 Socket *DeviceBridge::sock = 0;
 Interface *DeviceBridge::eth = 0;
 List *DeviceBridge::psp_mac = 0;
+List *DeviceBridge::received_mac = 0;
 bool DeviceBridge::loop = true;
 bool DeviceBridge::speed = true;
 bool DeviceBridge::unregister = false;
@@ -51,6 +52,7 @@ u_int DeviceBridge::total_received = 0;
 u_int DeviceBridge::total_sent = 0;
 u_int DeviceBridge::total_size_received = 0;
 u_int DeviceBridge::total_size_sent = 0;
+u_int DeviceBridge::mac_count = 0;
 
 //u_int DeviceBridge::total_broadcast_received = 0;
 //u_int DeviceBridge::total_broadcast_sent = 0;
@@ -65,6 +67,7 @@ DeviceBridge::DeviceBridge(bool packet_ordering, bool packet_buffering) {
 	cap_packet = new PspPacket();
 	last_packet = GetTickCount();
 	psp_mac = new List(compareFunc, deleteFunc);
+	received_mac = new List(compareFunc, deleteFunc);
 	srand(time(0));
 #ifdef _WIN32
 	client_id = (rand() << 16) | rand();
@@ -132,19 +135,45 @@ void DeviceBridge::capture_callback(u_char* user, const struct pcap_pkthdr* pack
 			cap_packet->setPayload(packet_data, packet_header->len);
 			cap_packet->setPacketCounter(client_counter++);
 			cap_packet->setID(client_id);
-			if(!psp_mac->exist((void *)cap_packet->getSrcMAC())) {
-				psp_mac->add(new DeviceInfo(cap_packet->getSrcMAC()));
+			if(!psp_mac->exist((void *)cap_packet->getSrcMAC()) && mac_count < 16) {
+				psp_mac->add(new DeviceInfo(cap_packet->getSrcMAC(), mac_count));
 				printf("Registered new MAC: %s\n", cap_packet->getSrcMACstr());
+				//InfoPacket *inf = new InfoPacket(cap_packet->getSrcMAC(), mac_count);
+				//sock->writeSocket(inf);
+				mac_count++;
 			}
-			if(!psp_mac->exist((void *)cap_packet->getDstMAC())) {
-				if(sock->writeSocket(cap_packet) < 0) {
+			if(psp_mac->exist((void *)cap_packet->getDstMAC())) {
+				u_int dst_uid = 0;
+				u_int src_uid = 0;
+				DeviceInfo *inf = 0;
+				if(cap_packet->isBroadcast()) {
+					dst_uid = 0xF;
+				} else {
+					inf = (DeviceInfo *)received_mac->get((void *)cap_packet->getDstMAC());
+					if(inf) {
+						dst_uid = inf->getUID();
+					} else {
+						printf("Captured packet with unknown destination. Discarding\n");
+						return;
+					}
+				}
+				inf = (DeviceInfo *)psp_mac->get((void *)cap_packet->getSrcMAC());
+				if(inf) {
+					src_uid = inf->getUID();
+				} else {
+					printf("Unknown error. Source MAC isnt in list. Discarding\n");
+					return;
+				}
+				if(sock->writeSocket((char *)cap_packet->getStrippedPacketData(dst_uid,src_uid), cap_packet->getStrippedPacketSize())) {
+				//if(sock->writeSocket(cap_packet) < 0) {
 					printf("capture_callback: end of stream reached. Finishing thread...\n");
 					eth->breakLoop();
 					loop = false;
 					return;
 				}
 				total_sent++;
-				total_size_sent += cap_packet->getPacketSize();
+				//total_size_sent += cap_packet->getPacketSize();
+				total_size_sent += cap_packet->getStrippedPacketSize();
 				//if(cap_packet->isBroadcast()) {
 				//	total_broadcast_sent++;
 				//	total_broadcast_size_sent += cap_packet->getPacketSize();
@@ -256,7 +285,7 @@ void *DeviceBridge::speed_thread(void *arg) {
 		if(msecs < 0)
 			msecs = -msecs;
 		bytes = (total_size_received - bytes);
-		printf("Download: %i bytes/s (%i KiB/s), Last: %i secs ago (%i msecs ago)   ", bytes, bytes/1024, msecs /1000, msecs);
+		printf("Download: %i bytes/s (%i kbps), Last: %i secs ago (%i msecs ago)   ", bytes, bytes/128, msecs /1000, msecs);
 		bytes = total_size_received;
 		fflush(stdout);
 #ifdef _WIN32
@@ -280,4 +309,6 @@ long DeviceBridge::GetTickCount() {
 
 DeviceBridge::~DeviceBridge() {
 	delete cap_packet;
+	delete psp_mac;
+	delete received_mac;
 }

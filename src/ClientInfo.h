@@ -66,7 +66,7 @@ public:
 	void setsCounter(u_int c);
 	u_int getsCounter();
 	int compareTo(ClientInfo *);
-	bool addDevice(const u_char *mac);
+	bool addDevice(const u_char *mac, u_int id);
 	bool findDevice(const u_char *mac);
 	void clearDevices();
 	virtual ~ClientInfo();

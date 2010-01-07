@@ -43,10 +43,20 @@ private:
 	//make the structure 1 byte-aligned (gaps in a packet are bad)
 	#pragma pack(push,1)
 	//simplified version of a eth packet
+	struct psp_packet {
+		u_short pkt_type;
+		u_int pkt_counter;
+		u_char padding[12];
+		u_char data[1454];
+	};
+	#pragma pack(pop)
+
+	#pragma pack(push,1)
 	struct eth_packet {
 		u_char dst_mac[6];
 		u_char src_mac[6];
-		u_char data[1474];
+		u_char eth_type[2];
+		struct psp_packet payload;
 	};
 	#pragma pack(pop)
 
@@ -69,6 +79,7 @@ public:
 	PspPacket();
 	u_int getPacketCounter();
 	int getPacketSize();
+	int getStrippedPacketSize();
 	int getMaxPacketSize();
 	int getPayloadSize();
 	void setPayloadSize(int size);
@@ -82,6 +93,8 @@ public:
 	void setPayload(const u_char *data, size_t size);
 	void setPacketCounter(int count);
 	u_char *getPacketData();
+	u_char *getStrippedPacketData(u_int dst, u_int src);
+	u_short getPktType();
 	bool checkHeader();
 	bool isBroadcast();
 	void setID(u_int id);

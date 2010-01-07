@@ -102,7 +102,7 @@ void *UDPServer::run(void *arg) {
 							}
 						}
 					}
-					if(dev->addDevice(packet->getSrcMAC())) {
+					if(dev->addDevice(packet->getSrcMAC(),0)) {
 						printf("== Server: received MAC: %s from %s:%i\n", packet->getSrcMACstr(), info.getIPstr(), info.getPort());
 					}
 					if(order)

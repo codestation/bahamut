@@ -13,4 +13,4 @@ all: $(OBJS)
 	$(CC) $(CFLAGS) $(INCLUDE_PATH) -c $*.cpp
 
 clean:
-	-del -f ${OBJS} $(TARGET)
+	rm -f ${OBJS} $(TARGET)

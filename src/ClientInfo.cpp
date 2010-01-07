@@ -89,9 +89,9 @@ int ClientInfo::compareTo(ClientInfo *info) {
 	return memcmp(&client, info->getSocketInfo(), sizeof(client));
 }
 
-bool ClientInfo::addDevice(const u_char *mac) {
+bool ClientInfo::addDevice(const u_char *mac, u_int id) {
 	if(!psp->exist((void *)mac)) {
-		psp->add(new DeviceInfo(mac));
+		psp->add(new DeviceInfo(mac, id));
 		return true;
 	}
 	return false;

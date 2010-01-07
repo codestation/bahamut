@@ -43,6 +43,9 @@ u_int PspPacket::getPacketCounter() {
 int PspPacket::getPacketSize() {
 	return packet->size + 14;
 }
+int PspPacket::getStrippedPacketSize() {
+	return packet->size + 1;
+}
 int PspPacket::getMaxPacketSize() {
 	return sizeof(packet_container);
 }
@@ -87,6 +90,11 @@ void PspPacket::setPacketCounter(int count) {
 u_char *PspPacket::getPacketData() {
 	return (u_char *)packet;
 }
+u_char *PspPacket::getStrippedPacketData(u_int src, u_int dst) {
+	u_char mac = (u_char)(dst << 4) | (u_char)(src);
+	packet->data.eth_type[1] = mac;
+	return (packet->data.eth_type) + 1;
+}
 bool PspPacket::checkHeader() {
 	return packet->header[0] == 'M' && packet->header[1] == 'H';
 }
@@ -95,6 +103,9 @@ void PspPacket::setID(u_int id) {
 }
 u_int PspPacket::getID() {
 	return packet->id;
+}
+u_short PspPacket::getPktType() {
+	return packet->data.payload.pkt_type;
 }
 bool PspPacket::isBroadcast() {
 	return !memcmp(getDstMAC(), broadcast_mac, 6);

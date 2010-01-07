@@ -27,12 +27,17 @@
 
 #include "DeviceInfo.h"
 
-DeviceInfo::DeviceInfo(const u_char *psp_mac) {
+DeviceInfo::DeviceInfo(const u_char *psp_mac, u_int id) {
+	uid = id;
 	memcpy(mac, psp_mac, 6);
 }
 
 inline const u_char *DeviceInfo::getMAC() {
 	return mac;
+}
+
+u_int DeviceInfo::getUID() {
+	return uid;
 }
 
 char *DeviceInfo::getMACstr() {

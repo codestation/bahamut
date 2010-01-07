@@ -70,6 +70,9 @@ private:
 	static Interface *eth;
 
 	static List *psp_mac;
+	static List *received_mac;
+
+	static u_int mac_count;
 
 	static u_int total_received;
 	static u_int total_sent;
