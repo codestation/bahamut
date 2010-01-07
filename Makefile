@@ -1,9 +1,6 @@
 linux:
 	cd src && make -f Makefile all
 
-linux-i686:
-	cd src && make -f Makefile.i686 all
-
 win32:
 	cd src && make -f Makefile.win32 all
 
