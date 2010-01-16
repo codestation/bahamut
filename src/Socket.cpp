@@ -22,7 +22,7 @@
  * File Description:
  *     TCP/UDP Socket class
  * Special Notes:
- *     TODO: none yet
+ *     TODO: change the "proto" param from char* to int
  */
 
 #include "Socket.h"
@@ -138,8 +138,7 @@ ssize_t Socket::readSocket(char *buffer, size_t size) {
  * The function doesnt return until some bytes are readed or an error
  * ocuur
  * Parameters:
- * 		buffer: pointer to a buffer that will hold the data
- * 		size: max bytes to be read by the socket
+ * 		packet: object who holds the data readed by the socket
  * Returns: (>= 0) number of bytes received, -1 on error
 */
 ssize_t Socket::readSocket(PspPacket *packet) {
@@ -147,26 +146,25 @@ ssize_t Socket::readSocket(PspPacket *packet) {
 }
 
 /*
- * Reads a socket and store the data in the specified buffer
- * The function doesnt return until some bytes are readed or an error
+ * Writes the specified data into a socket
+ * The function doesnt return until all the buffer is written or an error
  * ocuur
  * Parameters:
- * 		buffer: pointer to a buffer that will hold the data
- * 		size: max bytes to be read by the socket
- * Returns: (>= 0) number of bytes received, -1 on error
+ * 		data: pointer to a buffer that will hold the data
+ * 		size: max bytes to be written to the socket
+ * Returns: (>= 0) number of bytes written, -1 on error
 */
 ssize_t Socket::writeSocket(const char *data, size_t length) {
 	return send(sock, data, length , 0);
 }
 
 /*
- * Reads a socket and store the data in the specified buffer
- * The function doesnt return until some bytes are readed or an error
+ * Writes the specified data into a socket
+ * The function doesnt return until all the buffer is written or an error
  * ocuur
  * Parameters:
- * 		buffer: pointer to a buffer that will hold the data
- * 		size: max bytes to be read by the socket
- * Returns: (>= 0) number of bytes received, -1 on error
+ * 		packet: object who holds the data to be written to the socket
+ * Returns: (>= 0) number of bytes written, -1 on error
 */
 ssize_t Socket::writeSocket(PspPacket *packet) {
 	return send(sock, (char *)packet->getPacketData(), packet->getPacketSize() , 0);
