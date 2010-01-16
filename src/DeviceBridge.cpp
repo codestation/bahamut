@@ -52,7 +52,7 @@ u_int DeviceBridge::total_received = 0;
 u_int DeviceBridge::total_sent = 0;
 u_int DeviceBridge::total_size_received = 0;
 u_int DeviceBridge::total_size_sent = 0;
-u_int DeviceBridge::mac_count = 0;
+//u_int DeviceBridge::mac_count = 0;
 
 //u_int DeviceBridge::total_broadcast_received = 0;
 //u_int DeviceBridge::total_broadcast_sent = 0;
@@ -102,6 +102,8 @@ bool DeviceBridge::makeBridge(Interface *eth, Socket *sock) {
 #endif
 				//eth->compileFilter(0);
 				//eth->setFilter();
+				eth->setdirection();
+				// loop
 				eth->captureLoop(capture_callback);
 #ifdef _WIN32
 				sock->WSAClean();
@@ -135,12 +137,12 @@ void DeviceBridge::capture_callback(u_char* user, const struct pcap_pkthdr* pack
 			cap_packet->setPayload(packet_data, packet_header->len);
 			cap_packet->setPacketCounter(client_counter++);
 			cap_packet->setID(client_id);
-			if(!psp_mac->exist((void *)cap_packet->getSrcMAC()) && mac_count < 16) {
-				psp_mac->add(new DeviceInfo(cap_packet->getSrcMAC(), mac_count));
+			if(!psp_mac->exist((void *)cap_packet->getSrcMAC()) && psp_mac->count() < 16) {
+				psp_mac->add(new DeviceInfo(cap_packet->getSrcMAC(), psp_mac->count()));
 				printf("Registered new MAC: %s\n", cap_packet->getSrcMACstr());
 				//InfoPacket *inf = new InfoPacket(cap_packet->getSrcMAC(), mac_count);
 				//sock->writeSocket(inf);
-				mac_count++;
+				//mac_count++;
 			}
 			if(psp_mac->exist((void *)cap_packet->getDstMAC())) {
 				u_int dst_uid = 0;
