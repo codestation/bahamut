@@ -48,6 +48,7 @@ Interface::Interface(const char *dev) {
 Interface::~Interface() {
 	//make sure that we close the interface before destroy the object
 	close();
+	free(dev);
 }
 
 /*
@@ -57,11 +58,15 @@ Interface::~Interface() {
  * Returns: true if the interface is open, false otherwise
 */
 bool Interface::open() {
-#ifdef _WIN32
-	return (handle = pcap_open(dev, BUFSIZ, PCAP_OPENFLAG_PROMISCUOUS | PCAP_OPENFLAG_NOCAPTURE_LOCAL | PCAP_OPENFLAG_MAX_RESPONSIVENESS, 500, NULL, errbuf)) != NULL;
-#else
+//#ifdef _WIN32
+//	return (handle = pcap_open(dev, BUFSIZ, PCAP_OPENFLAG_PROMISCUOUS | PCAP_OPENFLAG_NOCAPTURE_LOCAL | PCAP_OPENFLAG_MAX_RESPONSIVENESS, 500, NULL, errbuf)) != NULL;
+//#else
 	return (handle = pcap_open_live(dev, BUFSIZ, 1, 500, errbuf)) != NULL;
-#endif
+//#endif
+}
+
+int Interface::setdirection(pcap_direction_t d) {
+	return pcap_setdirection(handle, d);
 }
 
 /*
@@ -126,6 +131,7 @@ List *Interface::getAdapterList() {
 	List *lst = 0;
 	pcap_if_t *alldevs;
 	pcap_if_t *d;
+	//FIXME do something with this errbuf
 	char errbuf[PCAP_ERRBUF_SIZE];
 
 	if (pcap_findalldevs(&alldevs, errbuf) != -1) {
@@ -164,12 +170,6 @@ int Interface::updateFilters(DeviceContainer *cont) {
 	return 0;
 }*/
 
-/*
- * Closes the interface
- * Parameters:
-		none
- * Returns: void
-*/
 
 void Interface::delete_info(void *obj) {
 	delete (InterfaceInfo *)obj;
@@ -178,6 +178,13 @@ void Interface::delete_info(void *obj) {
 const char *Interface::getLastError() {
 	return errbuf;
 }
+
+/*
+ * Closes the interface
+ * Parameters:
+		none
+ * Returns: void
+*/
 void Interface::close() {
 	if(handle) {
 		pcap_close(handle);

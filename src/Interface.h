@@ -29,9 +29,9 @@
 #ifndef INTERFACE_H_
 #define INTERFACE_H_
 
-#ifdef _WIN32
-#define HAVE_REMOTE
-#endif
+//#ifdef _WIN32
+//#define HAVE_REMOTE
+//#endif
 #include <pcap.h>
 #include <string.h>
 #include "InterfaceInfo.h"
@@ -49,6 +49,7 @@ public:
 	Interface(const char *dev);
 	bool open();
 	void close();
+	int setdirection(pcap_direction_t d = PCAP_D_IN);
 	int captureLoop(pcap_handler packet_func);
 	int capture(const void *packet_data, size_t size);
 	int inject(const u_char *packet_data, size_t size);
