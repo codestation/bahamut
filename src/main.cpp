@@ -44,12 +44,13 @@ void exit_signal(int signal) {
 		bridge->removeBridge();
 	}
 }
-
+/*
 int capture_func(const u_char *mac, u_int len) {
 	u_int manufacturer = (mac[6] << 16) | (mac[7] << 8) | mac[8];
 	return (manufacturer == 0x001C26 || manufacturer == 0x001DD9 || manufacturer == 0x0016FE) ? 0 : 1;
 	//return (manufacturer == 0x001C26 || manufacturer == 0x001DD9 || manufacturer == 0x00197D) ? 0 : 1;
 }
+*/
 /*
 int inject_func(PspPacket *packet) {
 	total_received++;
@@ -111,7 +112,7 @@ int main(int argc, char ** argv) {
 	}
 	if(dev) {
 		bridge = new DeviceBridge(order);
-		bridge->registerCaptureCallback(capture_func);
+		//bridge->registerCaptureCallback(capture_func);
 		//bridge->registerInjectCallback(inject_func);
 		printf("Making bridge wifi <==> %s:%s\n", argv[1], argv[2]);
 		bridge->makeBridge( dev, argv[1], atoi(argv[2]));
