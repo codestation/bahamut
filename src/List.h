@@ -38,6 +38,7 @@ private:
 		void *obj;
 		node *next;
 	} *head, *iter;
+	int counter;
 public:
 	List(COMPARE_FUNC, DELETE_FUNC);
 	void add(void *item);

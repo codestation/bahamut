@@ -31,6 +31,7 @@
 List::List(COMPARE_FUNC cfunc, DELETE_FUNC dfunc) {
 	head = 0;
 	iter = 0;
+	counter = 0;
 	comp = cfunc;
 	del = dfunc;
 }
@@ -49,6 +50,7 @@ void List::add(void *obj) {
 		curr->next->next = 0;
 	}
 	iter = head;
+	counter++;
 }
 
 void *List::get(void *obj) {
@@ -86,6 +88,7 @@ bool List::remove(void *obj) {
 				del(curr->obj);
 				delete curr;
 				iter = head;
+				counter--;
 				return true;
 			}
 			prev = curr;
@@ -96,13 +99,14 @@ bool List::remove(void *obj) {
 }
 
 int List::count() {
-	node *curr = head;
+	/*node *curr = head;
 	int c = 0;
 	while(curr) {
 		curr = curr->next;
 		c++;
 	}
-	return c;
+	return c;*/
+	return counter;
 }
 
 
@@ -114,6 +118,7 @@ void List::clear() {
 		head = next;
 	}
 	iter = head;
+	counter = 0;
 }
 
 void List::rewind() {
