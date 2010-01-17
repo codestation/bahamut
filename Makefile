@@ -1,4 +1,4 @@
-linux:
+all:
 	cd src && make -f Makefile all
 
 win32:
