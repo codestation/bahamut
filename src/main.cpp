@@ -43,6 +43,7 @@ void exit_signal(int signal) {
 	if(bridge) {
 		bridge->removeBridge();
 	}
+	serv->stop();
 }
 /*
 int capture_func(const u_char *mac, u_int len) {
@@ -117,10 +118,12 @@ int main(int argc, char ** argv) {
 		printf("Making bridge wifi <==> %s:%s\n", argv[1], argv[2]);
 		bridge->makeBridge( dev, argv[1], atoi(argv[2]));
 		printf("Bridge closed. Freeing resources\n");
-		free(dev);
 		delete bridge;
+	} else {
+		serv->wait();
 	}
-	if(strcmp(argv[1], "localhost") == 0) {
+	if(dev && strcmp(argv[1], "localhost") == 0) {
+		free(dev);
 		serv->stop();
 		printf("Waiting for server to finish...\n");
 #ifdef _WIN32

@@ -38,7 +38,7 @@ UDPServer::UDPServer(int port, bool packet_ordering) {
 }
 
 #ifdef _WIN32
-void UDPServer::run(void *arg) {
+unsigned __stdcall UDPServer::run(void *arg) {
 #else
 void *UDPServer::run(void *arg) {
 #endif
@@ -67,9 +67,13 @@ void *UDPServer::run(void *arg) {
 			int size;
 			while(loop_flag) {
 				if((size = sock->receive(packet, &info)) == -1) {
-					printf("== Server: error occurred while receiving packet\n");
+					if(errno != EAGAIN)
+						printf("== Server: error occurred while receiving packet\n");
+					//else
+					//	printf("== Server: EAGAIN timeout\n");
 					continue;
 				}
+				printf("== Server: loop\n");
 				total_size_received += size;
 				total_received++;
 				if(packet->checkHeader()) {
@@ -151,7 +155,7 @@ void *UDPServer::run(void *arg) {
 
 void UDPServer::start() {
 #ifdef _WIN32
-	th = _beginthread(&run, 4096, &port);
+	th = _beginthreadex(NULL, 4096, &run, &port, 0, NULL);
 #else
 	pthread_create(&th, NULL, &run, &port);
 #endif
@@ -160,6 +164,14 @@ void UDPServer::start() {
 void UDPServer::stop() {
 	loop_flag = false;
 	sock->closeSocket();
+}
+
+int UDPServer::wait() {
+#ifdef _WIN32
+	return WaitForSingleObject(th, INFINITE);
+#else
+	return pthread_join(th, NULL);
+#endif
 }
 
 int UDPServer::compareFunc(void *obj, void *item) {

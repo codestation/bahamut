@@ -47,7 +47,8 @@ private:
 	int sock;
 	int port;
 	int proto;
-
+	//timeval timeout;
+	//fd_set readfds;
 #ifdef _WIN32
 	typedef int socklen_t;
 	static bool init;
@@ -60,6 +61,7 @@ public:
 	void WSAClean();
 #endif
 	bool bindSocket();
+	//bool readAvailable();
 	bool listenSocket(int max);
 	int receive(PspPacket *packet, ClientInfo *info);
 	int send(PspPacket *packet, ClientInfo *info);

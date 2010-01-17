@@ -35,6 +35,7 @@
 #include <pthread.h>
 #endif
 #include <time.h>
+#include <errno.h>
 #include "PspPacket.h"
 #include "ServerSocket.h"
 #include "List.h"
@@ -52,7 +53,7 @@ private:
 	static bool order;
 	static ServerSocket *sock;
 #ifdef _WIN32
-	static void run(void *);
+	static unsigned __stdcall run(void *);
 #else
 	static void *run(void *);
 #endif
@@ -64,6 +65,7 @@ public:
 	UDPServer(int port, bool packet_ordering = true);
 	void start();
 	void stop();
+	int wait();
 	virtual ~UDPServer();
 };
 

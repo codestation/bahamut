@@ -78,6 +78,12 @@ void ServerSocket::WSAClean() {
 
 bool ServerSocket::bindSocket() {
 	if((sock = socket(PF_INET, proto == IPPROTO_TCP ? SOCK_STREAM : SOCK_DGRAM, 0)) >= 0) {
+		struct timeval tv;
+		tv.tv_sec = 2;
+		tv.tv_usec = 0;
+		setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(timeval));
+		//FD_ZERO(&readfds);
+		//FD_SET(sock, &readfds);
 		sockaddr_in server;
 		memset(&server, 0, sizeof(server));
 		server.sin_family = AF_INET;
@@ -92,7 +98,16 @@ bool ServerSocket::bindSocket() {
 bool ServerSocket::listenSocket(int max) {
 	return listen( sock, max) != -1;
 }
-
+/*
+bool ServerSocket::readAvailable() {
+	timeout.tv_sec = 1;
+	timeout.tv_usec = 0;
+	if(select(-1, &readfds, NULL, NULL, &timeout) < 0)
+		return false;
+	else
+		return FD_ISSET(sock, &readfds);
+}
+*/
 int ServerSocket::receive(PspPacket *packet, ClientInfo *info) {
 	socklen_t addrlen = info->getSocketSize();
 	int res = recvfrom( sock, (char *)packet->getPacketData(), packet->getMaxPacketSize(), 0, (struct sockaddr *)info->getSocketInfo(), &addrlen);
