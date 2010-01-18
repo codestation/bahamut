@@ -56,7 +56,7 @@ void *UDPServer::run(void *arg) {
 	if(server_id == 0)
 		server_id++;
 	printf("== Server: Initializing UDP server, ID: %X\n", server_id);
-	sock = new ServerSocket(*(int *)arg, "udp");
+	sock = new ServerSocket(*(int *)arg, ServerSocket::UDP_SOCKET);
 #ifdef _WIN32
 	if(sock->WSAStart()) {
 #endif
@@ -146,7 +146,11 @@ void *UDPServer::run(void *arg) {
 			printf("Error while binding the socket\n");
 		}
 		delete sock;
+#ifdef _WIN32
+	} else {
+		printf("== Server: error calling WSAStart\n");
 	}
+#endif
 	return 0;
 }
 

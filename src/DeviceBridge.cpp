@@ -29,6 +29,9 @@
 
 #include "DeviceBridge.h"
 
+// FIXME: I know this is very ugly but its only for logging purposes
+// I have to remove this crap ASAP and clean the code
+
 PspPacket *DeviceBridge::cap_packet = 0;
 u_int DeviceBridge::client_counter = 0;
 u_int DeviceBridge::server_counter = 0;
@@ -81,7 +84,7 @@ DeviceBridge::DeviceBridge(bool packet_ordering, bool packet_buffering) {
 
 bool DeviceBridge::makeBridge(const char *dev, const char *host, int port) {
 	eth = new Interface(dev);
-	sock = new Socket(host, port, "udp");
+	sock = new Socket(host, port, Socket::UDP_SOCKET);
 	bool res = makeBridge(eth, sock);
 	delete eth;
 	delete sock;

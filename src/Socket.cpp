@@ -39,17 +39,11 @@ bool Socket::init = false;
  * 		proto: "tcp" or "udp"
  * Returns: void
 */
-Socket::Socket(const char *addr, int port, const char *proto) {
+Socket::Socket(const char *addr, int port, socket_type proto) {
 	sock = 0;
 	socket_flag = 1;
 	host = strdup(addr);
-	if(strcmp(proto,"tcp") == 0) {
-		this->proto = IPPROTO_TCP;
-	} else if (strcmp(proto,"udp") == 0) {
-		this->proto = IPPROTO_UDP;
-	} else {
-		this->proto = -1;
-	}
+	this->proto = proto;
 	this->port = port;
 }
 
@@ -102,7 +96,7 @@ Socket::Socket(int sock) {
  * Returns: true on sucess, false otherwise
 */
 bool Socket::connectSocket() {
-	if((sock = socket(PF_INET, proto == IPPROTO_TCP ? SOCK_STREAM : SOCK_DGRAM, 0)) >= 0) {
+	if((sock = socket(PF_INET, proto == TCP_SOCKET ? SOCK_STREAM : SOCK_DGRAM, 0)) >= 0) {
 		//struct timeval tv;
 		//tv.tv_sec = 2;
 		//tv.tv_usec = 0;

@@ -55,7 +55,9 @@ private:
 #endif
 
 public:
-	Socket(const char *addr, int port, const char *proto);
+	enum socket_type {TCP_SOCKET, UDP_SOCKET};
+
+	Socket(const char *addr, int port, socket_type proto);
 	Socket(int s);
 #ifdef _WIN32
 	bool WSAStart();

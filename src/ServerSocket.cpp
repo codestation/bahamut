@@ -32,15 +32,9 @@
 bool ServerSocket::init = false;
 #endif
 
-ServerSocket::ServerSocket(int port, const char *proto) {
+ServerSocket::ServerSocket(int port, socket_type proto) {
 	sock = 0;
-	if(strcmp(proto,"tcp") == 0) {
-		this->proto = IPPROTO_TCP;
-	} else if (strcmp(proto,"udp") == 0) {
-		this->proto = IPPROTO_UDP;
-	} else {
-		this->proto = -1;
-	}
+	this->proto = proto;
 	this->port = port;
 }
 
@@ -77,7 +71,7 @@ void ServerSocket::WSAClean() {
 
 
 bool ServerSocket::bindSocket() {
-	if((sock = socket(PF_INET, proto == IPPROTO_TCP ? SOCK_STREAM : SOCK_DGRAM, 0)) >= 0) {
+	if((sock = socket(PF_INET, proto == TCP_SOCKET ? SOCK_STREAM : SOCK_DGRAM, 0)) >= 0) {
 #ifdef _WIN32
 		int iOptVal = 2;
 		setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char*)&iOptVal, sizeof(timeval));

@@ -55,7 +55,9 @@ private:
 #endif
 
 public:
-	ServerSocket(int port, const char *proto);
+	enum socket_type {TCP_SOCKET, UDP_SOCKET};
+
+	ServerSocket(int port, socket_type proto);
 #ifdef _WIN32
 	bool WSAStart();
 	void WSAClean();
