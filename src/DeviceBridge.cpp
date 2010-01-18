@@ -139,7 +139,7 @@ void DeviceBridge::capture_callback(u_char* user, const struct pcap_pkthdr* pack
 			cap_packet->setID(client_id);
 			if(!psp_mac->exist((void *)cap_packet->getSrcMAC()) && psp_mac->count() < 16) {
 				psp_mac->add(new DeviceInfo(cap_packet->getSrcMAC(), psp_mac->count()));
-				printf("Registered new MAC: %s\n", cap_packet->getSrcMACstr());
+				printf("\nRegistered new MAC: %s\n", cap_packet->getSrcMACstr());
 				//InfoPacket *inf = new InfoPacket(cap_packet->getSrcMAC(), mac_count);
 				//sock->writeSocket(inf);
 				//mac_count++;

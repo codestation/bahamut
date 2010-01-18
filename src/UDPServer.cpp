@@ -146,11 +146,8 @@ void *UDPServer::run(void *arg) {
 			printf("Error while binding the socket\n");
 		}
 		delete sock;
-#ifdef _WIN32
 	}
-#else
 	return 0;
-#endif
 }
 
 void UDPServer::start() {
@@ -168,7 +165,7 @@ void UDPServer::stop() {
 
 int UDPServer::wait() {
 #ifdef _WIN32
-	return WaitForSingleObject(th, INFINITE);
+	return WaitForSingleObject((void *)th, INFINITE);
 #else
 	return pthread_join(th, NULL);
 #endif

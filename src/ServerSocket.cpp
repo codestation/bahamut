@@ -78,10 +78,15 @@ void ServerSocket::WSAClean() {
 
 bool ServerSocket::bindSocket() {
 	if((sock = socket(PF_INET, proto == IPPROTO_TCP ? SOCK_STREAM : SOCK_DGRAM, 0)) >= 0) {
+#ifdef _WIN32
+		int iOptVal = 2;
+		setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char*)&iOptVal, sizeof(timeval));
+#else
 		struct timeval tv;
 		tv.tv_sec = 2;
 		tv.tv_usec = 0;
 		setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(timeval));
+#endif
 		//FD_ZERO(&readfds);
 		//FD_SET(sock, &readfds);
 		sockaddr_in server;
