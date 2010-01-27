@@ -35,6 +35,7 @@ private:
 	bool disable_order;
 	char *interf;
 	bool dedicated;
+	bool empty;
 public:
 	ArgParser();
 	bool parse(int argc, char **argv);
@@ -45,6 +46,7 @@ public:
 	inline const char *interfaceName() { return interf; }
 	inline bool disableOrdering() { return disable_order; }
 	inline bool dedicatedServer() { return dedicated; }
+	inline bool isEmpty() { return empty; }
 	virtual ~ArgParser();
 };
 

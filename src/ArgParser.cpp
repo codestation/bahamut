@@ -28,6 +28,7 @@ ArgParser::ArgParser() {
 	disable_order = false;
 	interf = NULL;
 	dedicated = false;
+	empty = true;
 }
 
 bool ArgParser::parse(int argc, char **argv) {
@@ -67,8 +68,9 @@ bool ArgParser::parse(int argc, char **argv) {
 		default:
 			abort();
 		}
+		empty = false;
 	}
-	return true;
+	return !empty;
 }
 
 ArgParser::~ArgParser() {
