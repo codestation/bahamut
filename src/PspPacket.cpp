@@ -110,6 +110,12 @@ u_short PspPacket::getPktType() {
 bool PspPacket::isBroadcast() {
 	return !memcmp(getDstMAC(), broadcast_mac, 6);
 }
+void PspPacket::dumpPacket() {
+	for(unsigned int i = 0; i < 32; i++) {
+		printf("%02X", ((unsigned char *)&packet->data)[i]);
+	}
+	printf("\n");
+}
 PspPacket::~PspPacket() {
 	delete packet;
 }

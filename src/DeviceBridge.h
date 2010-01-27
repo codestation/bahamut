@@ -31,6 +31,7 @@
 #define DEVICEBRIDGE_H_
 
 #ifdef _WIN32
+#define WINVER 0x0501 //Windows XP
 #include <windows.h>
 #include <process.h>
 #else
@@ -84,6 +85,8 @@ private:
 	//static u_int total_broadcast_size_received;
 	//static u_int total_broadcast_size_sent;
 	static u_int total_droped;
+
+	char buffer_data[128];
 
 #ifdef _WIN32
 	unsigned int th;

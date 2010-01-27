@@ -27,6 +27,7 @@
  */
 
 #ifdef _WIN32
+#define WINVER 0x0501 //Windows XP
 #include <windows.h>
 #endif
 #include <stdlib.h>

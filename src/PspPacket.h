@@ -98,6 +98,7 @@ public:
 	bool checkHeader();
 	bool isBroadcast();
 	void setID(u_int id);
+	void dumpPacket();
 	u_int getID();
 	virtual ~PspPacket();
 };

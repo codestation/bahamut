@@ -36,6 +36,9 @@ ServerSocket::ServerSocket(int port, socket_type proto) {
 	sock = 0;
 	this->proto = proto;
 	this->port = port;
+#ifdef _WIN32
+	lpMsgBuf = 0;
+#endif
 }
 
 #ifdef _WIN32
@@ -130,5 +133,8 @@ void ServerSocket::closeSocket() {
 }
 
 ServerSocket::~ServerSocket() {
-
+#ifdef _WIN32
+	if(lpMsgBuf)
+		LocalFree(lpMsgBuf);
+#endif
 }

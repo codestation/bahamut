@@ -103,8 +103,10 @@ bool DeviceBridge::makeBridge(Interface *eth, Socket *sock) {
 				pthread_create(&th, NULL, &inject_thread, NULL);
 				pthread_create(&th, NULL, &speed_thread, NULL);
 #endif
-				//eth->compileFilter(0);
-				//eth->setFilter();
+				sprintf(buffer_data, "not ether src %s", eth->getMacAddressStr());
+				INFO("Filter: %s\n", buffer_data);
+				eth->compileFilter(buffer_data);
+				eth->setFilter();
 				eth->setdirection();
 				// loop
 				eth->captureLoop(capture_callback);
@@ -143,6 +145,7 @@ void DeviceBridge::capture_callback(u_char* user, const struct pcap_pkthdr* pack
 			if(!psp_mac->exist((void *)cap_packet->getSrcMAC()) && psp_mac->count() < 16) {
 				psp_mac->add(new DeviceInfo(cap_packet->getSrcMAC(), psp_mac->count()));
 				printf("\nRegistered new MAC: %s\n", cap_packet->getSrcMACstr());
+				cap_packet->dumpPacket();
 				//InfoPacket *inf = new InfoPacket(cap_packet->getSrcMAC(), mac_count);
 				//sock->writeSocket(inf);
 				//mac_count++;

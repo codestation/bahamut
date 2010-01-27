@@ -36,6 +36,7 @@
 #include <unistd.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <errno.h>
 #endif
 
 #include <string.h>
@@ -52,6 +53,7 @@ private:
 #ifdef _WIN32
 	typedef int socklen_t;
 	static bool init;
+	LPVOID lpMsgBuf;
 #endif
 
 public:
@@ -67,6 +69,38 @@ public:
 	bool listenSocket(int max);
 	int receive(PspPacket *packet, ClientInfo *info);
 	int send(PspPacket *packet, ClientInfo *info);
+	inline const char *getLastErrorMessage() {
+#ifdef _WIN32
+		if(lpMsgBuf)
+			LocalFree(lpMsgBuf);
+		FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
+				FORMAT_MESSAGE_FROM_SYSTEM |
+				FORMAT_MESSAGE_IGNORE_INSERTS, NULL, WSAGetLastError(),
+				MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+				(LPTSTR) &lpMsgBuf,
+				0, NULL);
+		return (const char *)lpMsgBuf;
+#else
+		return strerror(errno);
+#endif
+	}
+
+	inline bool readAgain() {
+#ifdef _WIN32
+		return WSAGetLastError() == WSAEWOULDBLOCK || WSAETIMEDOUT;
+#else
+		return errno == EAGAIN;
+#endif
+	}
+
+	inline int getLastError() {
+#ifdef _WIN32
+		return WSAGetLastError();
+#else
+		return errno;
+#endif
+	}
+
 	void closeSocket();
 	virtual ~ServerSocket();
 };

@@ -67,12 +67,10 @@ void *UDPServer::run(void *arg) {
 			int size;
 			while(loop_flag) {
 				if((size = sock->receive(packet, &info)) == -1) {
-					if(errno != EAGAIN) {
+					if(!sock->readAgain()) {
 						printf("== Server: error occurred while receiving packet\n");
-						printf("== Server: %s\n", strerror(errno));
+						printf("== Server: %s (%i)\n", sock->getLastErrorMessage(), sock->getLastError());
 					}
-					//else
-					//	printf("== Server: EAGAIN timeout\n");
 					continue;
 				}
 				printf("== Server: loop\n");

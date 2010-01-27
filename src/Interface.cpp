@@ -58,15 +58,59 @@ Interface::~Interface() {
  * Returns: true if the interface is open, false otherwise
 */
 bool Interface::open() {
-//#ifdef _WIN32
-//	return (handle = pcap_open(dev, BUFSIZ, PCAP_OPENFLAG_PROMISCUOUS | PCAP_OPENFLAG_NOCAPTURE_LOCAL | PCAP_OPENFLAG_MAX_RESPONSIVENESS, 500, NULL, errbuf)) != NULL;
-//#else
+#ifdef _WIN32
+	return (handle = pcap_open(dev, BUFSIZ, PCAP_OPENFLAG_PROMISCUOUS | PCAP_OPENFLAG_NOCAPTURE_LOCAL | PCAP_OPENFLAG_MAX_RESPONSIVENESS, 500, NULL, errbuf)) != NULL;
+#else
 	return (handle = pcap_open_live(dev, BUFSIZ, 1, 500, errbuf)) != NULL;
-//#endif
+#endif
 }
 
 int Interface::setdirection(pcap_direction_t d) {
 	return pcap_setdirection(handle, d);
+}
+
+const char *Interface::geterr() {
+	return pcap_geterr(handle);
+}
+
+const unsigned char *Interface::getMacAddress() {
+#ifdef _WIN32
+	char *realdev = 0;
+	//search for the GUID (pcap returns the GUID with the "\Device\NPF_" prefix)
+	if(!dev || !(realdev = strchr(dev, '{')))
+		return NULL;
+	PIP_ADAPTER_ADDRESSES pAddress, pAddresses = NULL;
+	ULONG outBufLen = 0;
+
+	if(GetAdaptersAddresses(AF_INET, 0, NULL, pAddresses, &outBufLen) != ERROR_BUFFER_OVERFLOW)
+		return NULL;
+	pAddresses = (IP_ADAPTER_ADDRESSES *)malloc(outBufLen);
+	if(GetAdaptersAddresses(AF_INET, 0, NULL, pAddresses, &outBufLen) != NO_ERROR)
+		return NULL;
+	pAddress = pAddresses;
+	while (pAddress) {
+		INFO("Adapter: %s\n", pAddress->AdapterName);
+		if(!strcmp(pAddress->AdapterName, realdev)) {
+			memcpy(mac, pAddress->PhysicalAddress, 6);
+			break;
+		}
+		pAddress = pAddress->Next;
+	}
+	free(pAddresses);
+	if(!pAddress)
+		return NULL;
+#else
+	if(dev) {
+		struct ifreq ifr;
+		int fd = socket(AF_INET, SOCK_DGRAM, 0);
+		ifr.ifr_addr.sa_family = AF_INET;
+		strncpy(ifr.ifr_name, dev, IFNAMSIZ-1);
+		if(ioctl(fd, SIOCGIFHWADDR, &ifr) == -1)
+			return NULL;
+		memcpy(mac, ifr.ifr_hwaddr.sa_data, 6);
+	}
+#endif
+	return mac;
 }
 
 /*
@@ -114,7 +158,14 @@ int Interface::compileFilter(char *filter) {
 	bpf_u_int32 pcap_ip;
 	if(pcap_lookupnet(dev, &pcap_ip, &pcap_netmask, errbuf) == -1)
 		return -1;
+	pcap_freecode(&fp);
 	return pcap_compile(handle, &fp, filter, 1, pcap_netmask);
+}
+
+const char *Interface::getMacAddressStr() {
+	unsigned const char *mac = getMacAddress();
+	sprintf(mac_str,"%.2x:%.2x:%.2x:%.2x:%.2x:%.2x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+	return mac_str;
 }
 
 /*
@@ -124,7 +175,9 @@ int Interface::compileFilter(char *filter) {
  * Returns: 0 on success, -1 on error
 */
 int Interface::setFilter() {
-	return pcap_setfilter(handle, &fp);
+	int res = pcap_setfilter(handle, &fp);
+	pcap_freecode(&fp);
+	return res;
 }
 
 List *Interface::getAdapterList() {
