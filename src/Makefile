@@ -12,7 +12,8 @@ OBJS = main.o			\
 		ClientInfo.o	\
 		DeviceBridge.o	\
 		InterfaceInfo.o \
-		List.o		\
+		List.o			\
+		Logger.o		\
 		ArgParser.o
 
 SVNREV:= -D'SVN_REV="$(shell LC_ALL=C svnversion -cn ../ | sed -e "s/.*://" -e "s/\([0-9]*\).*/\1/" | grep "[0-9]" )"'

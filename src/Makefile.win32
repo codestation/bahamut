@@ -3,9 +3,21 @@ TARGET = bahamut-engine.exe
 CFLAGS = -march=i686 -O2 -pipe -fomit-frame-pointer -Wall -static-libgcc
 INCLUDE_PATH = -I /usr/i686-pc-mingw32/usr/include -I /usr/i686-pc-mingw32/usr/include/pcap
 LIB_PATH = /usr/i686-pc-mingw32/usr/lib/pcap
-LIBS = -L $(LIB_PATH) -lwpcap -lwsock32
-OBJS = main.o Interface.o Socket.o PspPacket.o DeviceInfo.o ServerSocket.o UDPServer.o ClientInfo.o DeviceBridge.o InterfaceInfo.o List.o ArgParser.o
-
+LIBS = -L $(LIB_PATH) -lwpcap -lwsock32 -liphlpapi
+OBJS = main.o			\
+		Interface.o		\
+		Socket.o		\
+		PspPacket.o		\
+		DeviceInfo.o 	\
+		ServerSocket.o	\
+		UDPServer.o		\
+		ClientInfo.o	\
+		DeviceBridge.o	\
+		InterfaceInfo.o \
+		List.o			\
+		Logger.o		\
+		ArgParser.o
+		
 SVNREV:= -D'SVN_REV="$(shell LC_ALL=C svnversion -cn ../ | sed -e "s/.*://" -e "s/\([0-9]*\).*/\1/" | grep "[0-9]" )"'
 CFLAGS += $(SVNREV)
 
