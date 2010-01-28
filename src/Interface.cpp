@@ -120,8 +120,8 @@ const unsigned char *Interface::getMacAddress() {
  * 		packet_func: a pointer of a function specified by pcap_handler
  * Returns: -1 if an error occurs, -2 if breakLoop was called
 */
-int Interface::captureLoop(pcap_handler packet_func) {
-	return pcap_loop ( handle, -1, packet_func, (u_char *)dev);
+int Interface::captureLoop(pcap_handler packet_func, u_char *data) {
+	return pcap_loop ( handle, -1, packet_func, data);
 }
 
 /*

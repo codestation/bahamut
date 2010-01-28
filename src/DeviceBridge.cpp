@@ -30,46 +30,20 @@
 
 #include "DeviceBridge.h"
 
-// FIXME: I know this is very ugly but its only for logging purposes
-// I have to remove this crap ASAP and clean the code
-
-Packet *DeviceBridge::cap_packet = 0;
-u_int DeviceBridge::client_counter = 0;
-u_int DeviceBridge::server_counter = 0;
-u_int DeviceBridge::client_id = 0;
-u_int DeviceBridge::server_id = 0;
-Socket *DeviceBridge::sock = 0;
-Interface *DeviceBridge::eth = 0;
-List *DeviceBridge::local_mac = 0;
-List *DeviceBridge::remote_mac = 0;
-bool DeviceBridge::loop = true;
-bool DeviceBridge::unregister = false;
-bool DeviceBridge::order = true;
-bool DeviceBridge::buffer = false;
-bool DeviceBridge::server_conn = false;
-DeviceBridge::CAPTURE_FUNC DeviceBridge::cap = 0;
-DeviceBridge::INJECT_FUNC DeviceBridge::inj = 0;
-
-u_int DeviceBridge::total_droped = 0;
-u_int DeviceBridge::total_received = 0;
-u_int DeviceBridge::total_sent = 0;
-u_int DeviceBridge::total_size_received = 0;
-u_int DeviceBridge::total_size_sent = 0;
-//u_int DeviceBridge::mac_count = 0;
-
-//u_int DeviceBridge::total_broadcast_received = 0;
-//u_int DeviceBridge::total_broadcast_sent = 0;
-//u_int DeviceBridge::total_broadcast_size_received = 0;
-//u_int DeviceBridge::total_broadcast_size_sent = 0;
-
-long DeviceBridge::last_packet = 0;
-
 DeviceBridge::DeviceBridge(bool packet_ordering, bool packet_buffering) {
+	loop = true;
+	cap = NULL;
+	inj = NULL;
+	client_counter = server_counter = 0;
+	client_id = server_id = 0;
+	sock = NULL;
+	eth = NULL;
+	local_mac = remote_mac = NULL;
+	unregister = false;
 	order = packet_ordering;
 	buffer = packet_buffering;
 	cap_packet = new Packet();
 	speed = new SpeedThread();
-	last_packet = speed->getTick();
 	local_mac = new List(compareFunc, deleteFunc);
 	remote_mac = new List(compareFunc, deleteFunc);
 	srand(time(0));
@@ -86,6 +60,7 @@ DeviceBridge::DeviceBridge(bool packet_ordering, bool packet_buffering) {
 bool DeviceBridge::makeBridge(const char *dev, const char *host, int port) {
 	eth = new Interface(dev);
 	sock = new Socket(host, port, Socket::UDP_SOCKET);
+	// doesnt return until connection end
 	bool res = makeBridge(eth, sock);
 	delete eth;
 	delete sock;
@@ -94,32 +69,36 @@ bool DeviceBridge::makeBridge(const char *dev, const char *host, int port) {
 bool DeviceBridge::makeBridge(Interface *eth, Socket *sock) {
 	if(eth->open()) {
 #ifdef _WIN32
-		if(sock->WSAStart()) {
+		if(sock->WSAStart())
+			return false;
 #endif
-			if(sock->connectSocket()) {
-				this->start();
-				speed->start();
-				sprintf(buffer_data, "not ether src %s", eth->getMacAddressStr());
-				INFO("Filter: %s\n", buffer_data);
-				eth->compileFilter(buffer_data);
-				eth->setFilter();
-				eth->setdirection();
-				// starts loop, doesnt return until close
-				eth->captureLoop(capture_callback);
+		if(sock->connectSocket()) {
+			char buffer_data[128];
+			this->start();
+			speed->start();
+			sprintf(buffer_data, "not ether src %s", eth->getMacAddressStr());
+			INFO("Filter applied: %s\n", buffer_data);
+			eth->compileFilter(buffer_data);
+			eth->setFilter();
+			eth->setdirection();
+			// starts loop, doesnt return until close
+			eth->captureLoop(capture_callback, (u_char *)this);
 #ifdef _WIN32
-				sock->WSAClean();
+			sock->WSAClean();
 #endif
-				eth->close();
-				sock->closeSocket();
-			}
-#ifdef _WIN32
+			eth->close();
+			sock->closeSocket();
+			return true;
 		}
-#endif
 	}
-	return true;
+	return false;
 }
 
-void DeviceBridge::capture_callback(u_char* user, const struct pcap_pkthdr* packet_header, const u_char* packet_data) {
+void DeviceBridge::capture_callback(u_char *user, const struct pcap_pkthdr* packet_header, const u_char* packet_data) {
+	((DeviceBridge *)user)->capture(packet_header, packet_data);
+}
+
+void DeviceBridge::capture(const struct pcap_pkthdr* packet_header, const u_char* packet_data) {
 	if(loop) {
 		if(packet_header->len <= MAX_PAYLOAD_SIZE) {
 			if(cap && cap(packet_data, packet_header->len))
@@ -158,6 +137,7 @@ void DeviceBridge::capture_callback(u_char* user, const struct pcap_pkthdr* pack
 int DeviceBridge::run() {
 	Packet *packet = new Packet();
 	int size;
+	int server_conn = false;
 	while(loop) {
 		if((size = sock->readSocket(packet)) < 0) {
 			INFO("inject_thread: end of stream reached. Finishing thread...\n");
@@ -165,9 +145,7 @@ int DeviceBridge::run() {
 			eth->breakLoop();
 			break;
 		}
-		last_packet = speed->getTick();
-		//FIXME: remove this var
-		total_size_received += size;
+		speed->addSize(size);
 		if(packet->checkHeader()) {
 			if(!server_conn) {
 				server_id = packet->getID();

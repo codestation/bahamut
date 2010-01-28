@@ -25,13 +25,13 @@ class SpeedThread: public Thread {
 private:
 	bool flag;
 	long last_time;
-	unsigned long last_size;
+	unsigned long total_size;
 public:
 	SpeedThread();
 	int run();
 	void stop();
 	inline void setTime(long time) { last_time = time; }
-	inline void setSize(long size) { last_size = size; }
+	inline void addSize(long size) { total_size += size; }
 	static long getTick();
 	virtual ~SpeedThread();
 };

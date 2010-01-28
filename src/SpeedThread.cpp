@@ -20,9 +20,9 @@ int SpeedThread::run() {
 		int msecs = actual - last;
 		if(msecs < 0)
 			msecs = -msecs;
-		bytes = (last_size - bytes);
+		bytes = (total_size - bytes);
 		INFO("Download: %i bytes/s (%i kbps), Last: %i secs ago (%i msecs ago)   ", bytes, bytes/128, msecs /1000, msecs);
-		bytes = last_size;
+		bytes = total_size;
 		fflush(stdout);
 #ifdef _WIN32
 		Sleep(1000);

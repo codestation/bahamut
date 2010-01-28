@@ -52,55 +52,33 @@ class DeviceBridge: public Thread {
 public:
 	typedef int (*CAPTURE_FUNC) (const u_char *, u_int);
 	typedef int (*INJECT_FUNC) (Packet *);
+
 private:
 	static void capture_callback(u_char* user, const struct pcap_pkthdr* packet_header, const u_char* packet_data);
-	static CAPTURE_FUNC cap;
-	static INJECT_FUNC inj;
-	static bool loop;
-	static long last_packet;
-	static Packet *cap_packet;
-public:
-	static u_int client_counter;
-	static u_int server_counter;
-private:
-	static u_int client_id;
-	static u_int server_id;
-	static bool server_conn;
-	static bool order;
-	static bool buffer;
-	static bool unregister;
-	static Socket *sock;
-	static Interface *eth;
+	CAPTURE_FUNC cap;
+	INJECT_FUNC inj;
+	bool loop;
+	Packet *cap_packet;
+	u_int client_counter;
+	u_int server_counter;
+	u_int client_id;
+	u_int server_id;
+	bool order;
+	bool buffer;
+	bool unregister;
+	Socket *sock;
+	Interface *eth;
 
-	static List *local_mac;
-	static List *remote_mac;
-
-	static u_int mac_count;
-
-	static u_int total_received;
-	static u_int total_sent;
-	static u_int total_size_received;
-	static u_int total_size_sent;
-
-	//static u_int total_broadcast_received;
-	//static u_int total_broadcast_sent;
-	//static u_int total_broadcast_size_received;
-	//static u_int total_broadcast_size_sent;
-	static u_int total_droped;
-
-	char buffer_data[128];
-
-#ifdef _WIN32
-	unsigned int th;
-#else
-	pthread_t th;
-#endif
+	List *local_mac;
+	List *remote_mac;
 	SpeedThread *speed;
 
 private:
 	static int compareFunc(void *, void *);
 	static void deleteFunc(void *);
+	void capture(const struct pcap_pkthdr* packet_header, const u_char* packet_data);
 public:
+	int run();
 	DeviceBridge(bool packet_ordering = true, bool packet_buffering = false);
 	bool makeBridge(Interface *eth, Socket *sock);
 	bool makeBridge(const char *dev, const char *host, int port);
@@ -108,12 +86,6 @@ public:
 	void registerCaptureCallback(CAPTURE_FUNC func);
 	void registerInjectCallback(INJECT_FUNC func);
 	const char *getLastError();
-#ifdef _WIN32
-	static void inject_thread(void *arg);
-#else
-	static void *inject_thread(void *arg);
-#endif
-	int run();
 	virtual ~DeviceBridge();
 };
 
