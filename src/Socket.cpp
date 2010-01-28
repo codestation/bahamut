@@ -85,8 +85,9 @@ void Socket::WSAClean() {
  * 		sock: a socket handler
  * Returns: void
 */
-Socket::Socket(int sock) {
+Socket::Socket(int sock, sockaddr_in *addr) {
 	this->sock = sock;
+	memcpy(&client, addr, sizeof(client));
 }
 
 /*
@@ -135,8 +136,8 @@ ssize_t Socket::readSocket(char *buffer, size_t size) {
  * 		packet: object who holds the data readed by the socket
  * Returns: (>= 0) number of bytes received, -1 on error
 */
-ssize_t Socket::readSocket(PspPacket *packet) {
-	return recv(sock, (char *)packet->getPacketData(), packet->getMaxPacketSize(), 0);
+ssize_t Socket::readSocket(Packet *packet) {
+	return recv(sock, (char *)packet->getData(), packet->getMaxPacketSize(), 0);
 }
 
 /*
@@ -160,8 +161,8 @@ ssize_t Socket::writeSocket(const char *data, size_t length) {
  * 		packet: object who holds the data to be written to the socket
  * Returns: (>= 0) number of bytes written, -1 on error
 */
-ssize_t Socket::writeSocket(PspPacket *packet) {
-	return send(sock, (char *)packet->getPacketData(), packet->getPacketSize() , 0);
+ssize_t Socket::writeSocket(Packet *packet) {
+	return send(sock, (char *)packet->getData(), packet->getSize() , 0);
 }
 
 /*

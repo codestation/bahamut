@@ -5,7 +5,8 @@ LIBS = -lpcap -lpthread
 OBJS = main.o			\
 		Interface.o		\
 		Socket.o		\
-		PspPacket.o		\
+		Packet.o		\
+		EthPacket.o		\
 		DeviceInfo.o 	\
 		ServerSocket.o	\
 		UDPServer.o		\
@@ -14,6 +15,9 @@ OBJS = main.o			\
 		InterfaceInfo.o \
 		List.o			\
 		Logger.o		\
+		Thread.o		\
+		TcpServer.o		\
+		SpeedThread.o	\
 		ArgParser.o
 
 SVNREV:= -D'SVN_REV="$(shell LC_ALL=C svnversion -cn ../ | sed -e "s/.*://" -e "s/\([0-9]*\).*/\1/" | grep "[0-9]" )"'

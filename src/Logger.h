@@ -29,6 +29,8 @@
 #ifndef LOGGER_H_
 #define LOGGER_H_
 
+#include <stdio.h>
+
 extern int log_enabled;
 
 #define INFO_ON() log_enabled = 1;

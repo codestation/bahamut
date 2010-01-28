@@ -29,6 +29,7 @@
 #define SOCKET_H_
 
 #ifdef _WIN32
+#define WINVER 0x0501 //Windows XP
 #include <windows.h>
 #include <winsock2.h>
 #else
@@ -37,7 +38,7 @@
 #include <netinet/in.h>
 #endif
 #include <string.h>
-#include "PspPacket.h"
+#include "Packet.h"
 
 #define PACKET_HEADER 10
 
@@ -58,16 +59,16 @@ public:
 	enum socket_type {TCP_SOCKET, UDP_SOCKET};
 
 	Socket(const char *addr, int port, socket_type proto);
-	Socket(int s);
+	Socket(int s, sockaddr_in *);
 #ifdef _WIN32
 	bool WSAStart();
 	void WSAClean();
 #endif
 	bool connectSocket();
 	ssize_t readSocket(char *, size_t size);
-	ssize_t readSocket(PspPacket *packet);
+	ssize_t readSocket(Packet *packet);
 	ssize_t writeSocket(const char *, size_t size);
-	ssize_t writeSocket(PspPacket *packet);
+	ssize_t writeSocket(Packet *packet);
 	void closeSocket();
 	virtual ~Socket();
 };

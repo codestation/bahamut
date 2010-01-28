@@ -97,8 +97,18 @@ bool ServerSocket::bindSocket() {
 	}
 }
 
-bool ServerSocket::listenSocket(int max) {
+bool ServerSocket::listenConnection(int max) {
 	return listen( sock, max) != -1;
+}
+
+Socket * ServerSocket::acceptConnection() {
+	sockaddr_in data;
+	Socket *newsock = NULL;
+	socklen_t len = sizeof(data);
+	int res = accept( sock, (sockaddr *)&data, &len);
+	if(res >= 0)
+		newsock = new Socket(res, &data);
+	return newsock;
 }
 /*
 bool ServerSocket::readAvailable() {
@@ -110,14 +120,14 @@ bool ServerSocket::readAvailable() {
 		return FD_ISSET(sock, &readfds);
 }
 */
-int ServerSocket::receive(PspPacket *packet, ClientInfo *info) {
+int ServerSocket::receive(Packet *packet, ClientInfo *info) {
 	socklen_t addrlen = info->getSocketSize();
-	int res = recvfrom( sock, (char *)packet->getPacketData(), packet->getMaxPacketSize(), 0, (struct sockaddr *)info->getSocketInfo(), &addrlen);
+	int res = recvfrom( sock, (char *)packet->getData(), packet->getMaxPacketSize(), 0, (struct sockaddr *)info->getSocketInfo(), &addrlen);
 	return res;
 }
 
-int ServerSocket::send(PspPacket *packet, ClientInfo *info) {
-	return sendto( sock, (char *)packet->getPacketData(), packet->getPacketSize(), 0, (struct sockaddr *)info->getSocketInfo(),info->getSocketSize());
+int ServerSocket::send(Packet *packet, ClientInfo *info) {
+	return sendto( sock, (char *)packet->getData(), packet->getSize(), 0, (struct sockaddr *)info->getSocketInfo(),info->getSocketSize());
 }
 
 void ServerSocket::closeSocket() {

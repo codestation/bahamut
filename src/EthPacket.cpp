@@ -9,10 +9,8 @@
 
 const u_char EthPacket::broadcast_mac[] = {(u_char)0xFF, (u_char)0xFF, (u_char)0xFF, (u_char)0xFF, (u_char)0xFF, (u_char)0xFF};
 
-EthPacket::EthPacket() {
-	::Packet();
-	eth = (eth_data *)pkt->data;
-	memset(&eth->header, 0, sizeof(eth_header));
+EthPacket::EthPacket(const u_char *packet_data) {
+	eth = (eth_data *)packet_data;
 }
 
 const u_char *EthPacket::getSrcMAC() {
@@ -41,7 +39,12 @@ void EthPacket::setDstMAC(const u_char *mac) {
 bool EthPacket::isBroadcast() {
 	return !memcmp(getDstMAC(), broadcast_mac, 6);
 }
-
+void EthPacket::hexdump() {
+	for(unsigned int i = 0; i < 32; i++) {
+		printf("%02X", ((unsigned char *)&eth->data)[i]);
+	}
+	printf("\n");
+}
 EthPacket::~EthPacket() {
 	eth = NULL;
 }

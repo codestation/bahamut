@@ -1,37 +1,84 @@
 /*
- * Packet.cpp
+ *  Project Bahamut: full ad-hoc tunneling software to be used by the
+ *  Playstation Portable (PSP) to emulate online features.
  *
- *  Created on: 14-ago-2008
- *      Author: code
+ *  Copyright (C) 2008  Codestation
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/*
+ * File Description:
+ *     Holds the packet info/data and makes easy access some packet structures
+ * Special Notes:
+ *		TODO: none yet
  */
 
 #include "Packet.h"
 
 Packet::Packet() {
-	pkt = new packet_data;
-	pkt->header.head[0] = 'M';
-	pkt->header.head[1] = 'H';
-	pkt->header.id = 0;
-	pkt->header.counter = 0;
-	memset(pkt->data, 0, sizeof(pkt->data));
+	packet = new packet_container;
+	packet->header.head[0] = 'M';
+	packet->header.head[1] = 'H';
+	packet->header.id = 0;
+	packet->header.counter = 0;
+	packet->header.size = sizeof(packet->data);
+}
+u_int Packet::getCounter() {
+	return packet->header.counter;
+}
+int Packet::getSize() {
+	return packet->header.size + 14;
+}
+/*
+int Packet::getStrippedPacketSize() {
+	return packet->header.size + 1;
+}*/
+int Packet::getMaxPacketSize() {
+	return sizeof(packet_container);
+}
+void Packet::setPayloadSize(int size) {
+	packet->header.size = size;
+}
+int Packet::getPayloadSize() {
+	return packet->header.size;
+}
+const u_char *Packet::getPayload() {
+	return (u_char *)&packet->data;
+}
+void Packet::setPayload(const u_char *data, size_t size) {
+	memcpy(&packet->data, data, size);
+	packet->header.size = size;
+}
+void Packet::setPayload(EthPacket *pkt, size_t size) {
+	memcpy(&packet->data, pkt->data(), size);
+	packet->header.size = size;
+}
+void Packet::setCounter(int count) {
+	packet->header.counter = count;
+}
+u_char *Packet::getData() {
+	return (u_char *)packet;
+}
+EthPacket *Packet::getEthData() {
+	return new EthPacket(packet->data);
 }
 
-void Packet::setID(u_short id) {
-	pkt->header.id = id;
-}
-
-u_short Packet::getID() {
-	return pkt->header.id;
-}
-
-void Packet::setCounter(u_short counter) {
-	pkt->header.counter = counter;
-}
-
-u_short Packet::getCounter() {
-	return pkt->header.counter;
+bool Packet::checkHeader() {
+	return packet->header.head[0] == 'M' && packet->header.head[1] == 'H';
 }
 
 Packet::~Packet() {
-	delete pkt;
+	delete packet;
 }

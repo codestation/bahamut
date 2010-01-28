@@ -37,11 +37,8 @@ UDPServer::UDPServer(int port, bool packet_ordering) {
 	order = packet_ordering;
 }
 
-#ifdef _WIN32
-unsigned __stdcall UDPServer::run(void *arg) {
-#else
-void *UDPServer::run(void *arg) {
-#endif
+
+int UDPServer::run() {
 	u_int total_received = 0;
 	u_int total_sent = 0;
 	u_int total_size_sent = 0;
@@ -56,12 +53,12 @@ void *UDPServer::run(void *arg) {
 	if(server_id == 0)
 		server_id++;
 	printf("== Server: Initializing UDP server, ID: %X\n", server_id);
-	sock = new ServerSocket(*(int *)arg, ServerSocket::UDP_SOCKET);
+	sock = new ServerSocket(*(int *)port, ServerSocket::UDP_SOCKET);
 #ifdef _WIN32
 	if(sock->WSAStart()) {
 #endif
 		if(sock->bindSocket()) {
-			PspPacket *packet = new PspPacket();
+			Packet *packet = new Packet();
 			List *client = new List(compareFunc, deleteFunc);
 			ClientInfo info;
 			int size;
@@ -98,7 +95,7 @@ void *UDPServer::run(void *arg) {
 								dev->setsCounter(0);
 								dev->clearDevices();
 							} else {
-								if(order && packet->getPacketCounter() <= dev->getrCounter()) {
+								if(order && packet->getCounter() <= dev->getrCounter()) {
 									//printf("=== Server: Packet arrives at wrong order (ID = %X, Expected > %i, Received = %i). Discarding..\n", dev->getID(), dev->getrCounter(), packet->getPacketCounter());
 									total_droped++;
 									continue;
@@ -106,19 +103,20 @@ void *UDPServer::run(void *arg) {
 							}
 						}
 					}
-					if(dev->addDevice(packet->getSrcMAC(),0)) {
-						printf("== Server: received MAC: %s from %s:%i\n", packet->getSrcMACstr(), info.getIPstr(), info.getPort());
+					EthPacket eth_packet(packet->getData());
+					if(dev->addDevice(eth_packet.getSrcMAC(),0)) {
+						printf("== Server: received MAC: %s from %s:%i\n", eth_packet.getSrcMACstr(), info.getIPstr(), info.getPort());
 					}
 					if(order)
-						dev->setrCounter(packet->getPacketCounter());
+						dev->setrCounter(packet->getCounter());
 					client->rewind();
 					while(client->hasNext()) {
 						ClientInfo *cl = (ClientInfo *)client->next();
 						if(dev != cl) {
-							if(packet->isBroadcast() || cl->findDevice((u_char *)packet->getDstMAC())) {
+							if(eth_packet.isBroadcast() || cl->findDevice((u_char *)eth_packet.getDstMAC())) {
 								packet->setID(server_id);
 								if(order) {
-									packet->setPacketCounter(cl->getsCounter());
+									packet->setCounter(cl->getsCounter());
 									cl->setsCounter(cl->getsCounter() + 1);
 								}
 								total_sent++;
@@ -154,25 +152,9 @@ void *UDPServer::run(void *arg) {
 	return 0;
 }
 
-void UDPServer::start() {
-#ifdef _WIN32
-	th = _beginthreadex(NULL, 4096, &run, &port, 0, NULL);
-#else
-	pthread_create(&th, NULL, &run, &port);
-#endif
-}
-
 void UDPServer::stop() {
 	loop_flag = false;
 	sock->closeSocket();
-}
-
-int UDPServer::wait() {
-#ifdef _WIN32
-	return WaitForSingleObject((void *)th, INFINITE);
-#else
-	return pthread_join(th, NULL);
-#endif
 }
 
 int UDPServer::compareFunc(void *obj, void *item) {

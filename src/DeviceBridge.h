@@ -39,24 +39,26 @@
 #include <sys/times.h>
 #endif
 #include <time.h>
+#include "Thread.h"
 #include "Interface.h"
 #include "Socket.h"
 #include "DeviceInfo.h"
+#include "EthPacket.h"
+#include "SpeedThread.h"
+#include "Logger.h"
 
 
-class DeviceBridge
-{
+class DeviceBridge: public Thread {
 public:
 	typedef int (*CAPTURE_FUNC) (const u_char *, u_int);
-	typedef int (*INJECT_FUNC) (PspPacket *);
+	typedef int (*INJECT_FUNC) (Packet *);
 private:
 	static void capture_callback(u_char* user, const struct pcap_pkthdr* packet_header, const u_char* packet_data);
 	static CAPTURE_FUNC cap;
 	static INJECT_FUNC inj;
 	static bool loop;
-	static bool speed;
 	static long last_packet;
-	static PspPacket *cap_packet;
+	static Packet *cap_packet;
 public:
 	static u_int client_counter;
 	static u_int server_counter;
@@ -70,8 +72,8 @@ private:
 	static Socket *sock;
 	static Interface *eth;
 
-	static List *psp_mac;
-	static List *received_mac;
+	static List *local_mac;
+	static List *remote_mac;
 
 	static u_int mac_count;
 
@@ -93,16 +95,11 @@ private:
 #else
 	pthread_t th;
 #endif
+	SpeedThread *speed;
 
 private:
 	static int compareFunc(void *, void *);
 	static void deleteFunc(void *);
-#ifdef _WIN32
-	static void speed_thread(void *arg);
-#else
-	static void *speed_thread(void *arg);
-	static long GetTickCount();
-#endif
 public:
 	DeviceBridge(bool packet_ordering = true, bool packet_buffering = false);
 	bool makeBridge(Interface *eth, Socket *sock);
@@ -116,6 +113,7 @@ public:
 #else
 	static void *inject_thread(void *arg);
 #endif
+	int run();
 	virtual ~DeviceBridge();
 };
 

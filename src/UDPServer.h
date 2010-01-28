@@ -29,6 +29,7 @@
 #define UDPSERVER_H_
 
 #ifdef _WIN32
+#define WINVER 0x0501 //Windows XP
 #include <windows.h>
 #include <process.h>
 #else
@@ -36,36 +37,27 @@
 #endif
 #include <time.h>
 #include <errno.h>
-#include "PspPacket.h"
+#include "Packet.h"
+#include "Thread.h"
+#include "EthPacket.h"
 #include "ServerSocket.h"
 #include "List.h"
 
-class UDPServer {
-private:
-#ifdef _WIN32
-	unsigned int th;
-#else
-	pthread_t th;
-#endif
+class UDPServer: public Thread {
+
 	int port;
 	static u_int server_id;
 	static bool loop_flag;
 	static bool order;
 	static ServerSocket *sock;
-#ifdef _WIN32
-	static unsigned __stdcall run(void *);
-#else
-	static void *run(void *);
-#endif
-	int receive(PspPacket *packet);
-	int send(PspPacket *packet);
+	int receive(Packet *packet);
+	int send(Packet *packet);
 	static int compareFunc(void *, void *);
 	static void deleteFunc(void *);
 public:
 	UDPServer(int port, bool packet_ordering = true);
-	void start();
 	void stop();
-	int wait();
+	int run();
 	virtual ~UDPServer();
 };
 

@@ -30,6 +30,7 @@
 #define SERVERSOCKET_H_
 
 #ifdef _WIN32
+#define WINVER 0x0501 //Windows XP
 #include <windows.h>
 #include <winsock2.h>
 #else
@@ -40,8 +41,9 @@
 #endif
 
 #include <string.h>
-#include "PspPacket.h"
+#include "Packet.h"
 #include "ClientInfo.h"
+#include "Socket.h"
 
 class ServerSocket {
 private:
@@ -66,14 +68,15 @@ public:
 #endif
 	bool bindSocket();
 	//bool readAvailable();
-	bool listenSocket(int max);
-	int receive(PspPacket *packet, ClientInfo *info);
-	int send(PspPacket *packet, ClientInfo *info);
+	bool listenConnection(int max);
+	Socket *acceptConnection();
+	int receive(Packet *packet, ClientInfo *info);
+	int send(Packet *packet, ClientInfo *info);
 	inline const char *getLastErrorMessage() {
 #ifdef _WIN32
 		if(lpMsgBuf)
 			LocalFree(lpMsgBuf);
-		FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
+			FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
 				FORMAT_MESSAGE_FROM_SYSTEM |
 				FORMAT_MESSAGE_IGNORE_INSERTS, NULL, WSAGetLastError(),
 				MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),

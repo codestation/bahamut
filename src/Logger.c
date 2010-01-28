@@ -25,4 +25,4 @@
  *		none
  */
 
-int log_enabled;
+int log_enabled = 0;
