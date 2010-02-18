@@ -26,6 +26,7 @@
  */
 
 #include "UDPServer.h"
+#include "Logger.h"
 
 bool UDPServer::loop_flag = true;
 u_int UDPServer::server_id = 0;
@@ -53,7 +54,7 @@ int UDPServer::run() {
 	if(server_id == 0)
 		server_id++;
 	printf("== Server: Initializing UDP server, ID: %X\n", server_id);
-	sock = new ServerSocket(*(int *)port, ServerSocket::UDP_SOCKET);
+	sock = new ServerSocket(port, ServerSocket::UDP_SOCKET);
 #ifdef _WIN32
 	if(sock->WSAStart()) {
 #endif
@@ -65,12 +66,11 @@ int UDPServer::run() {
 			while(loop_flag) {
 				if((size = sock->receive(packet, &info)) == -1) {
 					if(!sock->readAgain()) {
-						printf("== Server: error occurred while receiving packet\n");
-						printf("== Server: %s (%i)\n", sock->getLastErrorMessage(), sock->getLastError());
+						ERR("== Server: error occurred while receiving packet\n");
+						ERR("== Server: %s (%i)\n", sock->getLastErrorMessage(), sock->getLastError());
 					}
 					continue;
 				}
-				printf("== Server: loop\n");
 				total_size_received += size;
 				total_received++;
 				if(packet->checkHeader()) {
@@ -103,7 +103,8 @@ int UDPServer::run() {
 							}
 						}
 					}
-					EthPacket eth_packet(packet->getData());
+					EthPacket eth_packet(packet->getPayload());
+					//eth_packet.hexdump();
 					if(dev->addDevice(eth_packet.getSrcMAC(),0)) {
 						printf("== Server: received MAC: %s from %s:%i\n", eth_packet.getSrcMACstr(), info.getIPstr(), info.getPort());
 					}
@@ -134,7 +135,7 @@ int UDPServer::run() {
 			delete packet;
 			delete client;
 			sock->closeSocket();
-			printf("*** == Server: server finished. Statistics of use:\n");
+			printf("\n*** == Server: server finished. Statistics of use:\n");
 			printf("*** == Server: Total packets received: %i\n", total_received);
 			printf("*** == Server: Total packets sent: %i\n", total_sent);
 			printf("*** == Server: Total packets dropped: %i\n", total_droped);
@@ -154,7 +155,8 @@ int UDPServer::run() {
 
 void UDPServer::stop() {
 	loop_flag = false;
-	sock->closeSocket();
+	if(sock)
+		sock->closeSocket();
 }
 
 int UDPServer::compareFunc(void *obj, void *item) {

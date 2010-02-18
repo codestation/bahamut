@@ -41,7 +41,7 @@ bool EthPacket::isBroadcast() {
 }
 void EthPacket::hexdump() {
 	for(unsigned int i = 0; i < 32; i++) {
-		printf("%02X", ((unsigned char *)&eth->data)[i]);
+		printf("%02X", ((unsigned char *)&eth->header)[i]);
 	}
 	printf("\n");
 }

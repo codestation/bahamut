@@ -158,7 +158,6 @@ int Interface::compileFilter(char *filter) {
 	bpf_u_int32 pcap_ip;
 	if(pcap_lookupnet(dev, &pcap_ip, &pcap_netmask, errbuf) == -1)
 		return -1;
-	pcap_freecode(&fp);
 	return pcap_compile(handle, &fp, filter, 1, pcap_netmask);
 }
 

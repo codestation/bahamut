@@ -32,6 +32,14 @@ void Thread::start() {
 #endif
 }
 
+int Thread::detach() {
+#ifdef _WIN32
+	return 0;
+#else
+	return pthread_detach(th);
+#endif
+}
+
 int Thread::wait() {
 #ifdef _WIN32
 	return WaitForSingleObject((void *)th, INFINITE);

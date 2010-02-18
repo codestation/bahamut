@@ -125,6 +125,10 @@ void List::rewind() {
 	iter = head;
 }
 
+bool List::empty() {
+	return counter == 0;
+}
+
 void *List::next() {
 	node *tmp = iter;
 	if(iter)

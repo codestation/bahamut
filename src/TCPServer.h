@@ -9,18 +9,25 @@
 #define TCPSERVER_H_
 
 #include "Thread.h"
+#include "ServerSocket.h"
+#include "TCPThread.h"
 #include "Socket.h"
+#include "Logger.h"
 
-class TcpServer: public Thread {
+class TCPServer: public Thread {
 private:
-	Socket *sock;
+	ServerSocket *ssock;
+	Socket *s;
+	int port;
+	bool accept;
+	int max_clients;
 public:
-	TcpServer(void *arg);
+	TCPServer(int port, int max_clients = 3);
 	int send(void *data);
 	int receive(void *data);
 	int run();
 	void stop();
-	virtual ~TcpServer();
+	virtual ~TCPServer();
 };
 
 #endif /* TCPSERVER_H_ */

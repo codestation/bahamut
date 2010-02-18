@@ -16,7 +16,8 @@ OBJS = main.o			\
 		List.o			\
 		Logger.o		\
 		Thread.o		\
-		TcpServer.o		\
+		TCPServer.o		\
+		TCPThread.o		\
 		SpeedThread.o	\
 		ArgParser.o
 

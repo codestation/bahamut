@@ -36,6 +36,8 @@
 #include <unistd.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
+#include <errno.h>
 #endif
 #include <string.h>
 #include "Packet.h"
@@ -47,8 +49,7 @@ class Socket
 private:
 	int port;
 	int sock;
-	int socket_flag;
-	char *host;
+	char host[16];
 	int proto;
 	sockaddr_in client;
 #ifdef _WIN32
@@ -65,10 +66,42 @@ public:
 	void WSAClean();
 #endif
 	bool connectSocket();
+	inline int getDescriptor() { return sock; }
 	ssize_t readSocket(char *, size_t size);
 	ssize_t readSocket(Packet *packet);
 	ssize_t writeSocket(const char *, size_t size);
 	ssize_t writeSocket(Packet *packet);
+	inline const char *getIpAddress() { return inet_ntoa(client.sin_addr); };
+	inline int getPort() { return client.sin_port; }
+	inline const char *getLastErrorMessage() {
+#ifdef _WIN32
+		if(lpMsgBuf)
+			LocalFree(lpMsgBuf);
+			FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
+				FORMAT_MESSAGE_FROM_SYSTEM |
+				FORMAT_MESSAGE_IGNORE_INSERTS, NULL, WSAGetLastError(),
+				MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+				(LPTSTR) &lpMsgBuf,
+				0, NULL);
+		return (const char *)lpMsgBuf;
+#else
+		return strerror(errno);
+#endif
+	}
+	inline bool readAgain() {
+#ifdef _WIN32
+		return WSAGetLastError() == WSAEWOULDBLOCK || WSAETIMEDOUT;
+#else
+		return errno == EAGAIN;
+#endif
+	}
+	inline int getLastError() {
+#ifdef _WIN32
+		return WSAGetLastError();
+#else
+		return errno;
+#endif
+	}
 	void closeSocket();
 	virtual ~Socket();
 };

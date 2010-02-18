@@ -57,7 +57,7 @@ private:
 	static void capture_callback(u_char* user, const struct pcap_pkthdr* packet_header, const u_char* packet_data);
 	CAPTURE_FUNC cap;
 	INJECT_FUNC inj;
-	bool loop;
+	bool capture_enabled;
 	Packet *cap_packet;
 	u_int client_counter;
 	u_int server_counter;
@@ -83,6 +83,9 @@ public:
 	bool makeBridge(Interface *eth, Socket *sock);
 	bool makeBridge(const char *dev, const char *host, int port);
 	void removeBridge();
+	void unregisterClient();
+	void ignoreCapture() { capture_enabled = false; }
+	void stop();
 	void registerCaptureCallback(CAPTURE_FUNC func);
 	void registerInjectCallback(INJECT_FUNC func);
 	const char *getLastError();

@@ -39,7 +39,7 @@ u_int Packet::getCounter() {
 	return packet->header.counter;
 }
 int Packet::getSize() {
-	return packet->header.size + 14;
+	return packet->header.size + sizeof(header_data);
 }
 /*
 int Packet::getStrippedPacketSize() {

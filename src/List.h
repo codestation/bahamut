@@ -47,6 +47,7 @@ public:
 	bool exist(void *);
 	bool remove(void *);
 	int count();
+	bool empty();
 	void clear();
 	void rewind();
 	void *next();

@@ -25,13 +25,13 @@
  *     packets of the other clients and injects on the interface
  *
  * Special Notes:
- *     TODO: get rid of all those static things :/
+ *     TODO: more variables cleanup
  */
 
 #include "DeviceBridge.h"
 
 DeviceBridge::DeviceBridge(bool packet_ordering, bool packet_buffering) {
-	loop = true;
+	capture_enabled = true;
 	cap = NULL;
 	inj = NULL;
 	client_counter = server_counter = 0;
@@ -43,7 +43,8 @@ DeviceBridge::DeviceBridge(bool packet_ordering, bool packet_buffering) {
 	order = packet_ordering;
 	buffer = packet_buffering;
 	cap_packet = new Packet();
-	speed = new SpeedThread();
+	//speed = new SpeedThread();
+	//speed->setTime(speed->getTick());
 	local_mac = new List(compareFunc, deleteFunc);
 	remote_mac = new List(compareFunc, deleteFunc);
 	srand(time(0));
@@ -74,15 +75,22 @@ bool DeviceBridge::makeBridge(Interface *eth, Socket *sock) {
 #endif
 		if(sock->connectSocket()) {
 			char buffer_data[128];
+			INFO("Start of inject_thread. Starting thread\n");
 			this->start();
-			speed->start();
+			//speed->start();
 			sprintf(buffer_data, "not ether src %s", eth->getMacAddressStr());
-			INFO("Filter applied: %s\n", buffer_data);
+			//const char *mac = eth->getMacAddressStr();
+			//sprintf(buffer_data, "not ether src %s and not ether dst %s", mac, mac);
 			eth->compileFilter(buffer_data);
 			eth->setFilter();
+			INFO("Filter applied: %s\n", buffer_data);
 			eth->setdirection();
 			// starts loop, doesnt return until close
+			INFO("Start of capture_callback. Starting loop\n");
 			eth->captureLoop(capture_callback, (u_char *)this);
+			INFO("End of capture_callback. Finished loop\n");
+			this->stop();
+			this->wait();
 #ifdef _WIN32
 			sock->WSAClean();
 #endif
@@ -99,53 +107,70 @@ void DeviceBridge::capture_callback(u_char *user, const struct pcap_pkthdr* pack
 }
 
 void DeviceBridge::capture(const struct pcap_pkthdr* packet_header, const u_char* packet_data) {
-	if(loop) {
-		if(packet_header->len <= MAX_PAYLOAD_SIZE) {
-			if(cap && cap(packet_data, packet_header->len))
+	if(!capture_enabled)
+		return;
+	if(packet_header->len <= MAX_PAYLOAD_SIZE) {
+		if(cap && cap(packet_data, packet_header->len))
+			return;
+		EthPacket eth_packet(packet_data);
+		cap_packet->setPayload(&eth_packet, packet_header->len);
+		cap_packet->setCounter(client_counter++);
+		cap_packet->setID(client_id);
+		if(!local_mac->exist((void *)eth_packet.getSrcMAC()) && local_mac->count() < 16) {
+			local_mac->add(new DeviceInfo(eth_packet.getSrcMAC(), local_mac->count()));
+			INFO("Registered new MAC: %s\n", eth_packet.getSrcMACstr());
+		}
+		if(local_mac->exist((void *)eth_packet.getDstMAC())) {
+			INFO("Packet destination is local, ignoring\n");
+			return;
+		}
+		if(remote_mac->empty()) {
+			INFO("Remote list empty. Discarding\n");
+			return;
+		}
+		if(!eth_packet.isBroadcast()) {
+			if(!remote_mac->exist((void *)eth_packet.getDstMAC())) {
+				INFO("Captured packet with unknown destination. Discarding\n");
 				return;
-			EthPacket eth_packet(packet_data);
-			cap_packet->setPayload(&eth_packet, packet_header->len);
-			cap_packet->setCounter(client_counter++);
-			cap_packet->setID(client_id);
-			if(!local_mac->exist((void *)eth_packet.getSrcMAC()) && local_mac->count() < 16) {
-				local_mac->add(new DeviceInfo(eth_packet.getSrcMAC(), local_mac->count()));
-				INFO("\nRegistered new MAC: %s\n", eth_packet.getSrcMACstr());
-			}
-			if(local_mac->exist((void *)eth_packet.getDstMAC())) {
-				INFO("\nPacket destination is local, ignoring\n");
-			} else {
-				if(sock->writeSocket(cap_packet)) {
-					INFO("capture_callback: end of stream reached. Finishing thread...\n");
-					eth->breakLoop();
-					loop = false;
-					return;
-				}
 			}
 		}
-	} else {
-		if(unregister) {
-			cap_packet->setPayload((u_char *)"END",3);
-			cap_packet->setID(0);
-			INFO("Sending unregister packet to server\n");
-			sock->writeSocket(cap_packet);
-			sock->closeSocket();
+		//INFO("SRC: %s, DST: %s\n", eth_packet.getSrcMACstr(), eth_packet.getDstMACstr());
+		if(sock->writeSocket(cap_packet) < 0) {
+			//INFO("capture_callback: end of stream reached. Finishing thread...\n");
+			//eth->breakLoop();
+			//ignoreCapture();
+			//return;
+			ERR("Error writing in socket\n");
 		}
-		printf("End of capture_callback. Finishing loop\n");
 	}
+}
+
+void DeviceBridge::unregisterClient() {
+	cap_packet->setPayload((u_char *)"END",3);
+	cap_packet->setID(0);
+	INFO("Sending unregister packet to server\n");
+	sock->writeSocket(cap_packet);
+	sock->closeSocket();
 }
 
 int DeviceBridge::run() {
 	Packet *packet = new Packet();
 	int size;
 	int server_conn = false;
-	while(loop) {
-		if((size = sock->readSocket(packet)) < 0) {
-			INFO("inject_thread: end of stream reached. Finishing thread...\n");
-			loop = false;
-			eth->breakLoop();
-			break;
+	while(capture_enabled) {
+		if((size = sock->readSocket(packet)) == -1) {
+			if(!sock->readAgain()) {
+				ERR("Errror while reading socket\n");
+				//capture_enabled = false;
+				//eth->breakLoop();
+				//speed->stop();
+				//break;
+				continue;
+			} else {
+				continue;
+			}
 		}
-		speed->addSize(size);
+		//speed->addSize(size);
 		if(packet->checkHeader()) {
 			if(!server_conn) {
 				server_id = packet->getID();
@@ -170,16 +195,17 @@ int DeviceBridge::run() {
 		}
 	}
 	delete packet;
-	speed->stop();
 	INFO("End of inject_thread. Finished thread\n");
 	return 0;
 }
 
 void DeviceBridge::removeBridge() {
 	unregister = true;
-	loop = false;
+	//speed->stop();
+	this->stop();
+	this->wait();
 	eth->breakLoop();
-	//sock->closeSocket();
+	sock->closeSocket();
 }
 void DeviceBridge::registerCaptureCallback(CAPTURE_FUNC func) {
 	cap = func;
@@ -200,9 +226,13 @@ void DeviceBridge::deleteFunc(void *obj) {
 	delete (DeviceInfo *)obj;
 }
 
+void DeviceBridge::stop() {
+	capture_enabled = false;
+}
+
 DeviceBridge::~DeviceBridge() {
 	delete cap_packet;
 	delete local_mac;
 	delete remote_mac;
-	delete speed;
+	//delete speed;
 }

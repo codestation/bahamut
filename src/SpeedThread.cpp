@@ -9,7 +9,8 @@
 
 SpeedThread::SpeedThread() {
 	flag = true;
-
+	last_time = 0;
+	total_size = 0;
 }
 
 int SpeedThread::run() {

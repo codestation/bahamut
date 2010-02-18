@@ -41,8 +41,7 @@ bool Socket::init = false;
 */
 Socket::Socket(const char *addr, int port, socket_type proto) {
 	sock = 0;
-	socket_flag = 1;
-	host = strdup(addr);
+	strcpy(host, addr);
 	this->proto = proto;
 	this->port = port;
 }
@@ -88,6 +87,16 @@ void Socket::WSAClean() {
 Socket::Socket(int sock, sockaddr_in *addr) {
 	this->sock = sock;
 	memcpy(&client, addr, sizeof(client));
+	/*
+#ifdef _WIN32
+		int iOptVal = 2;
+		setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char*)&iOptVal, sizeof(timeval));
+#else
+		struct timeval tv;
+		tv.tv_sec = 2;
+		tv.tv_usec = 0;
+		setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(timeval));
+#endif*/
 }
 
 /*
@@ -98,10 +107,15 @@ Socket::Socket(int sock, sockaddr_in *addr) {
 */
 bool Socket::connectSocket() {
 	if((sock = socket(PF_INET, proto == TCP_SOCKET ? SOCK_STREAM : SOCK_DGRAM, 0)) >= 0) {
-		//struct timeval tv;
-		//tv.tv_sec = 2;
-		//tv.tv_usec = 0;
-		//setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(timeval));
+#ifdef _WIN32
+		int iOptVal = 2;
+		setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char*)&iOptVal, sizeof(timeval));
+#else
+		struct timeval tv;
+		tv.tv_sec = 2;
+		tv.tv_usec = 0;
+		setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(timeval));
+#endif
 		memset(&client, 0, sizeof(client));
 		client.sin_family = AF_INET;
 		client.sin_port = htons(port);

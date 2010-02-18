@@ -30,41 +30,32 @@
 #define WINVER 0x0501 //Windows XP
 #include <windows.h>
 #endif
-#include <stdlib.h>
 #include <signal.h>
-#include "Interface.h"
 #include "UDPServer.h"
+#include "TCPServer.h"
 #include "DeviceBridge.h"
 #include "Logger.h"
 #include "ArgParser.h"
+#include "TCPThread.h"
 
-UDPServer *serv = NULL;
+UDPServer *udp_serv = NULL;
+TCPServer *tcp_serv = NULL;
 DeviceBridge *bridge = NULL;
 
 void exit_signal(int signal) {
 	INFO("\nTrapped CTRL+C signal, shutting down...\n");
-	if(bridge) {
+	if(bridge)
 		bridge->removeBridge();
-	}
-	serv->stop();
+	if(udp_serv)
+		udp_serv->stop();
+	if(tcp_serv)
+		tcp_serv->stop();
 }
-
-//int capture_func(const u_char *mac, u_int len) {
-//	u_int manufacturer = (mac[6] << 16) | (mac[7] << 8) | mac[8];
-//	return (manufacturer == 0x001C26 || manufacturer == 0x001DD9 || manufacturer == 0x0016FE) ? 0 : 1;
-//	return (manufacturer == 0x001C26 || manufacturer == 0x001DD9 || manufacturer == 0x00197D) ? 0 : 1;
-//}
-
-
-//int inject_func(PspPacket *packet) {
-//	total_received++;
-//	return 0;
-//}
 
 int main(int argc, char ** argv) {
 	ArgParser opts;
 	if(!opts.parse(argc, argv)) {
-		ERR("Usage: bahamuth-engine -h <host> -p <port>  [-i <interface>] [-l] [-o]\n");
+		ERR("Usage: bahamuth-engine -h <host> -p <port>  [-i <interface>] [-l] [-o] [-d]\n");
 		return 1;
 	}
 	if(opts.verboseMode())
@@ -81,58 +72,72 @@ int main(int argc, char ** argv) {
 		INFO("Interface list:\n");
 		while(lst->hasNext()) {
 			InterfaceInfo *inf = (InterfaceInfo *)lst->next();
-//#ifdef _WIN32
-//			INFO("%i) %s\n", i++, inf->desc);
-//#else
-			INFO("%i) %s (%s)\n", i++, inf->name, inf->desc);
-//#endif
+			INFO("(%i) %s - %s\n", i++, inf->name, inf->desc);
 		}
 		delete lst;
 		return 2;
 	}
+
 	INFO("Bahamut engine SVN r%s starting...\n", SVN_REV);
+
 	if(!opts.getHost()) {
 		ERR("No host defined, exiting...\n");
 		return 1;
 	}
+
 	if(!opts.getPort()) {
 		ERR("No port defined, exiting...\n");
 		return 1;
 	}
+
 	if(!opts.interfaceName() && !opts.dedicatedServer()) {
 			ERR("No interface defined, exiting...\n");
 			return 1;
 	}
 
-	INFO("Intalling signal handler...\n");
+	INFO("Installing signal handler...\n");
 	signal(SIGINT, exit_signal);
 
 	if(strcmp(opts.getHost(), "localhost") == 0) {
-		INFO("Creating UDP server...\n");
-		serv = new UDPServer(atoi(opts.getPort()), !opts.disableOrdering());
-		INFO("Starting UDP server...\n");
-		serv->start();
+		//INFO("Creating UDP server...\n");
+		//udp_serv = new UDPServer(atoi(opts.getPort()), !opts.disableOrdering());
+		//INFO("Starting UDP server...\n");
+		//udp_serv->start();
+		//INFO("Creating TCP server...\n");
+		tcp_serv = new TCPServer(atoi(opts.getPort()));
+		INFO("Starting TCP server...\n");
+		tcp_serv->start();
 	}
 	if(!opts.dedicatedServer()) {
+		if(udp_serv)
+			udp_serv->detach();
+		if(tcp_serv)
+			tcp_serv->detach();
 		bridge = new DeviceBridge(!opts.disableOrdering());
-		//bridge->registerCaptureCallback(capture_func);
-		//bridge->registerInjectCallback(inject_func);
 		INFO("Making bridge wifi <==> %s:%s\n", opts.getHost(), opts.getPort());
-		bridge->makeBridge( opts.interfaceName(), opts.getHost(), atoi(opts.getPort()));
+		if(!bridge->makeBridge( opts.interfaceName(), opts.getHost(), atoi(opts.getPort())))
+			ERR("Error while making bridge\n");
 		INFO("Bridge closed. Freeing resources\n");
 		delete bridge;
 	} else {
-		serv->wait();
+		if(udp_serv)
+			udp_serv->wait();
+		if(tcp_serv)
+			tcp_serv->wait();
 	}
 	if(opts.interfaceName() && strcmp(opts.getHost(), "localhost") == 0) {
-		serv->stop();
+		if(udp_serv)
+			udp_serv->stop();
+		if(tcp_serv)
+			tcp_serv->stop();
 		INFO("Waiting for server to finish...\n");
 #ifdef _WIN32
 		Sleep(1000 * 2);
 #else
 		sleep(2);
 #endif
-		delete serv;
 	}
+	delete udp_serv;
+	delete tcp_serv;
 	return 0;
 }

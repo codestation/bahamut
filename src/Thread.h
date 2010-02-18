@@ -34,6 +34,7 @@ protected:
 public:
 	Thread();
 	void start();
+	int detach();
 	int wait();
 	virtual ~Thread();
 };
