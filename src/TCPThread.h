@@ -10,12 +10,16 @@
 
 #include "Thread.h"
 #include "Socket.h"
-#include "StreamSocket.h"
+#include "HTTPParser.h"
+
+#define WWWROOT "/home/code/public"
 
 class TCPThread: public Thread {
 private:
 	Socket *sock;
 	static bool stop_all;
+	void sendHTTPHeader(int code, const char *message, long int content_size);
+	int sendFile(const char *uri);
 public:
 	TCPThread(Socket *s);
 	int run();

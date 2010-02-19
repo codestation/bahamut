@@ -25,6 +25,7 @@ HTTPParser::parser_state HTTPParser::addData(const char *data, int size) {
 		return parser_status;
 	}
 	memcpy(buffer + buffer_pos, data, size);
+	buffer_pos += size;
 	if(parse_state < p_content)
 		parseHeader();
 	if(parse_state == p_error) {
@@ -32,6 +33,7 @@ HTTPParser::parser_state HTTPParser::addData(const char *data, int size) {
 	} else if(parse_state == p_content) {
 		if(content_length == 0)
 			parser_status = PARSE_ERROR;
+			parser_status = PARSE_COMPLETE;
 	}
 	return parser_status;
 }
@@ -89,15 +91,13 @@ void HTTPParser::parseHeader() {
 		State nextState = p_error;
 
 		for ( unsigned d = 0; d < sizeof(fsm) / sizeof(FSM); ++d ) {
-			//if ( fsm[d].curState == parser_state &&
-			if(true &&
-					( c == fsm[d].c || fsm[d].c == ANY ) ) {
+			if ( fsm[d].curState == parse_state &&	( c == fsm[d].c || fsm[d].c == ANY ) ) {
 
 				nextState = fsm[d].nextState;
 
-				//if ( fsm[d].actions & LOWER ) {
-					//_data[i] = tolower( _data[i] );
-				//}
+				if ( fsm[d].actions & LOWER ) {
+					buffer[i] = tolower(buffer[i]);
+				}
 
 				if ( fsm[d].actions & NULLIFY ) {
 					buffer[i] = 0;
@@ -123,6 +123,9 @@ void HTTPParser::parseHeader() {
 					// store position of first character of key.
 					//_keys.push_back( _keyIndex );
 					data_pair *pair = (data_pair *)malloc(sizeof(data_pair));
+					pair->key_pos = i;
+					pair->key_addr = buffer + key_index;
+					pair->value_addr = buffer + value_index;
 					list->add(pair);
 				}
 
@@ -134,7 +137,7 @@ void HTTPParser::parseHeader() {
 		if ( parse_state == p_content ) {
 			const char* str = getValue("content-length");
 			if ( str ) {
-				content_length = atoi( str );
+				content_length = atoi(str);
 			}
 			break;
 		}
@@ -142,6 +145,10 @@ void HTTPParser::parseHeader() {
 
 	parsed_pos = buffer_pos;
 
+}
+
+const char *HTTPParser::getURI() {
+	return buffer + 4;
 }
 
 const char *HTTPParser::getValue(const char *key) {
