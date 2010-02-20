@@ -54,6 +54,7 @@ private:
 	sockaddr_in client;
 #ifdef _WIN32
 	static bool init;
+	LPVOID lpMsgBuf;
 #endif
 
 public:

@@ -15,7 +15,7 @@
 class HTTPParser {
 
 public:
-	enum parser_state {PARSE_COMPLETE, PARSE_ERROR, PARSE_INCOMPLETE, PARSE_BUFFER_FULL};
+	enum parser_state {PARSE_COMPLETE,PARSE_INCOMPLETE, PARSE_ERROR, PARSE_BUFFER_FULL};
 
 private:
 	char buffer[4096];

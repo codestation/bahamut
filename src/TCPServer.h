@@ -21,6 +21,9 @@ private:
 	int port;
 	bool accept;
 	int max_clients;
+
+	void ssleep(int seconds);
+
 public:
 	TCPServer(int port, int max_clients = 3);
 	int send(void *data);

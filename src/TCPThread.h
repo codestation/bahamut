@@ -11,15 +11,14 @@
 #include "Thread.h"
 #include "Socket.h"
 #include "HTTPParser.h"
-
-#define WWWROOT "/home/code/public"
+#include "HTTPResponse.h"
 
 class TCPThread: public Thread {
 private:
 	Socket *sock;
+	HTTPResponse response;
 	static bool stop_all;
-	void sendHTTPHeader(int code, const char *message, long int content_size);
-	int sendFile(const char *uri);
+
 public:
 	TCPThread(Socket *s);
 	int run();

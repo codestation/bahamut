@@ -1,6 +1,6 @@
 CC = g++
 TARGET = bahamut-engine
-CFLAGS = -O2 -pipe -fomit-frame-pointer -Wall
+CFLAGS = -O3 -pipe -fomit-frame-pointer -Wall
 LIBS = -lpcap -lpthread
 OBJS = main.o			\
 		Interface.o		\
@@ -19,6 +19,8 @@ OBJS = main.o			\
 		TCPServer.o		\
 		TCPThread.o		\
 		SpeedThread.o	\
+		HTTPParser.o	\
+		HTTPResponse.o	\
 		ArgParser.o
 
 SVNREV:= -D'SVN_REV="$(shell LC_ALL=C svnversion -cn ../ | sed -e "s/.*://" -e "s/\([0-9]*\).*/\1/" | grep "[0-9]" )"'

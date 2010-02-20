@@ -15,6 +15,8 @@ HTTPParser::HTTPParser() {
 	value_index = 0;
 	content_index = 0;
 	parsed_pos = 0;
+	content_length = 0;
+	parse_state = 0;
 }
 
 HTTPParser::parser_state HTTPParser::addData(const char *data, int size) {
@@ -148,6 +150,13 @@ void HTTPParser::parseHeader() {
 }
 
 const char *HTTPParser::getURI() {
+	char *str = strchr(buffer + 4, ' ');
+	if(str)
+		str[0] = '\0';
+	else
+		return NULL;
+	if(strlen(buffer + 4) > 256)
+		return NULL;
 	return buffer + 4;
 }
 

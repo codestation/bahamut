@@ -74,27 +74,27 @@ void ServerSocket::WSAClean() {
 
 
 bool ServerSocket::bindSocket() {
-	if((sock = socket(PF_INET, proto == TCP_SOCKET ? SOCK_STREAM : SOCK_DGRAM, 0)) >= 0) {
 #ifdef _WIN32
-		int iOptVal = 2;
-		setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char*)&iOptVal, sizeof(timeval));
-#else
-		struct timeval tv;
-		tv.tv_sec = 2;
-		tv.tv_usec = 0;
-		setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(timeval));
-#endif
-		//FD_ZERO(&readfds);
-		//FD_SET(sock, &readfds);
-		sockaddr_in server;
-		memset(&server, 0, sizeof(server));
-		server.sin_family = AF_INET;
-		server.sin_port = htons(port);
-		server.sin_addr.s_addr = htonl (INADDR_ANY);
-		return bind( sock, (struct sockaddr *)&server, sizeof(server)) == 0;
-	} else {
+	if(!WSAStart())
 		return false;
-	}
+#endif
+	if((sock = socket(PF_INET, proto == TCP_SOCKET ? SOCK_STREAM : SOCK_DGRAM, 0)) < 0)
+		return false;
+#ifdef _WIN32
+	int iOptVal = 2;
+	setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char*)&iOptVal, sizeof(timeval));
+#else
+	struct timeval tv;
+	tv.tv_sec = 2;
+	tv.tv_usec = 0;
+	setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(timeval));
+#endif
+	sockaddr_in server;
+	memset(&server, 0, sizeof(server));
+	server.sin_family = AF_INET;
+	server.sin_port = htons(port);
+	server.sin_addr.s_addr = htonl (INADDR_ANY);
+	return bind( sock, (struct sockaddr *)&server, sizeof(server)) == 0;
 }
 
 bool ServerSocket::listenConnection(int max) {
