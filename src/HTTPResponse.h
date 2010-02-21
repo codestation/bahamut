@@ -18,6 +18,7 @@ public:
 	static const char *server;
 	static const char *modified;
 	static const char *etag;
+	static const char *connection;
 	static const char *empty;
 
 	static const char *mime_text_html;
@@ -49,7 +50,7 @@ public:
 	int sendHeader(Socket *s);
 	int sendFile(Socket *s, const char *uri);
 	int sendData(Socket *s, const char *data, int size, const char *mime_type = mime_text_plain);
-	int sendError(Socket *s, int code, const char *reason);
+	int sendError(Socket *s, int code, const char *reason, bool close = false);
 	const char *getDate(time_t *tv = NULL);
 	int isDirectory(const char *uri);
 	time_t lastModified(const char *uri);

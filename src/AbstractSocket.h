@@ -33,7 +33,7 @@ private:
 public:
 	enum socket_type {TCP_SOCKET, UDP_SOCKET};
 
-	AbstractSocket(int port, socket_type proto);
+	AbstractSocket();
 #ifdef _WIN32
 	bool Socket::WSAStart();
 	void Socket::WSAClean();

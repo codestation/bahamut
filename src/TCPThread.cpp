@@ -26,7 +26,9 @@ int TCPThread::run() {
 			int result = parser.addData(data, read);
 			if(result == HTTPParser::PARSE_COMPLETE) {
 				const char *uri = parser.getURI();
-				if(uri) {
+				if(strlen(uri) > 127)
+					response.sendError(sock, 500, "Internal server error");
+				else {
 					if(!strcmp(uri,"/query")) {
 						char buffer[128];
 						strcpy(buffer, response.getDate());
@@ -34,14 +36,17 @@ int TCPThread::run() {
 					} else {
 						response.sendFile(sock, uri);
 					}
-				} else {
-					response.sendError(sock, 414, "Request-URI Too Long");
 				}
 				parser.clear();
 			} else {
-				if(result == HTTPParser::PARSE_ERROR || result == HTTPParser::PARSE_BUFFER_FULL) {
-					response.sendError(sock, 500, "Internal server error");
+				if(result == HTTPParser::PARSE_ERROR) {
+					response.sendError(sock, 400, "Bad Request", true);
 					parser.clear();
+					break;
+				} else if(result == HTTPParser::PARSE_BUFFER_FULL) {
+					response.sendError(sock, 414, "Request-URI Too Long", true);
+					parser.clear();
+					break;
 				}
 			}
 		} else {
@@ -57,7 +62,9 @@ int TCPThread::run() {
 			}
 		}
 	}
+	sock->shutdownSocket();
 	delete sock;
+	INFO("== TCPThread: Connection closed with %s:%i\n", sock->getIpAddress(), sock->getPort());
 	delete this;
 	return 0;
 }

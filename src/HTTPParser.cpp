@@ -13,10 +13,12 @@ HTTPParser::HTTPParser() {
 	parser_status = PARSE_INCOMPLETE;
 	key_index = 0;
 	value_index = 0;
-	content_index = 0;
+	content_start = 0;
 	parsed_pos = 0;
 	content_length = 0;
 	parse_state = 0;
+	uri_start = 0;
+	args_start = 0;
 }
 
 HTTPParser::parser_state HTTPParser::addData(const char *data, int size) {
@@ -33,9 +35,13 @@ HTTPParser::parser_state HTTPParser::addData(const char *data, int size) {
 	if(parse_state == p_error) {
 		parser_status = PARSE_ERROR;
 	} else if(parse_state == p_content) {
-		if(content_length == 0)
-			parser_status = PARSE_ERROR;
-			parser_status = PARSE_COMPLETE;
+		if(content_length == 0 || buffer_pos - content_start >= content_length) {
+			if(parseRequestLine()) {
+				parser_status = PARSE_COMPLETE;
+			} else {
+				parser_status = PARSE_ERROR;
+			}
+		}
 	}
 	return parser_status;
 }
@@ -118,7 +124,7 @@ void HTTPParser::parseHeader() {
 				}
 
 				if ( fsm[d].actions & SET_CONTENT_START ) {
-					content_index = i + 1;
+					content_start = i + 1;
 				}
 
 				if ( fsm[d].actions & STORE_KEY_VALUE ) {
@@ -149,15 +155,22 @@ void HTTPParser::parseHeader() {
 
 }
 
+bool HTTPParser::parseRequestLine()
+{
+	char *str1 = (char *)memchr(buffer, ' ', sizeof(buffer));
+	if(!str1)
+		return false;
+	char *str2 = (char *)memchr(str1 + 1, ' ', sizeof(buffer) - (str1 + 1 - buffer));
+	if(!str2)
+		return false;
+	str1[0] = 0;
+	str2[0] = 0;
+	uri_start = str1 - buffer + 1;
+    return true;
+}
+
 const char *HTTPParser::getURI() {
-	char *str = strchr(buffer + 4, ' ');
-	if(str)
-		str[0] = '\0';
-	else
-		return NULL;
-	if(strlen(buffer + 4) > 256)
-		return NULL;
-	return buffer + 4;
+	return (const char *)buffer + uri_start;
 }
 
 const char *HTTPParser::getValue(const char *key) {

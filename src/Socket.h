@@ -103,6 +103,16 @@ public:
 		return errno;
 #endif
 	}
+
+	void ssleep(int seconds) {
+	#ifdef _WIN32
+		Sleep(1000 * seconds);
+	#else
+		sleep(seconds);
+	#endif
+	}
+
+	void shutdownSocket() { shutdown(sock, SHUT_RDWR); }
 	void closeSocket();
 	virtual ~Socket();
 };

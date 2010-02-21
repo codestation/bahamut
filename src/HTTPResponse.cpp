@@ -18,6 +18,7 @@ const char *HTTPResponse::type = "Content-Type: %s\r\n";
 const char *HTTPResponse::length = "Content-Length: %i\r\n";
 const char *HTTPResponse::server = "Server: %s\r\n";
 const char *HTTPResponse::date = "Date: %s\r\n";
+const char *HTTPResponse::connection = "Connection: %s\r\n";
 const char *HTTPResponse::modified = "Last-Modified: %s\r\n";
 const char *HTTPResponse::etag = "ETag: %s\r\n";
 const char *HTTPResponse::empty = "\r\n";
@@ -100,10 +101,12 @@ const char *HTTPResponse::getMime(const char *uri) {
 	return mime_application_stream;
 }
 
-int HTTPResponse::sendError(Socket *s, int code, const char *reason) {
+int HTTPResponse::sendError(Socket *s, int code, const char *reason, bool close) {
 
 	pushHeader(response, code, reason);
 	pushHeader(type, mime_text_html);
+	if(close)
+		pushHeader(connection, "close");
 	pushHeader(server, "Bahamut v0.2");
 	pushHeader(date, getDate());
 
@@ -139,7 +142,7 @@ int HTTPResponse::sendError(Socket *s, int code, const char *reason) {
 }
 
 int HTTPResponse::sendFile(Socket *s, const char *uri) {
-	char tmp_buffer[128];
+	char tmp_buffer[256];
 	if(uri[strlen(uri)-1] == '/')
 		sprintf(tmp_buffer, "%s%sindex.html", WWWROOT, uri);
 	else
@@ -170,6 +173,7 @@ int HTTPResponse::sendFile(Socket *s, const char *uri) {
 		}
 	}
 	sendError(s, 404, "Not found");
+	clear();
 	return 1;
 }
 

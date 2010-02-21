@@ -11,10 +11,11 @@
 bool AbstractSocket::init = false;
 #endif
 
-AbstractSocket::AbstractSocket(int port, socket_type proto) {
+
+AbstractSocket::AbstractSocket() {
 	sock = 0;
-	this->proto = proto;
-	this->port = port;
+	proto = 0;
+	port = 0;
 }
 
 #ifdef _WIN32

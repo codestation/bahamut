@@ -26,8 +26,6 @@ private:
 	int parse_state;
 	int parsed_pos;
 
-	char *uri_addr;
-	char *body_addr;
 	unsigned int content_length;
 
 	struct data_pair {
@@ -38,7 +36,10 @@ private:
 
 	int key_index;
 	int value_index;
-	int content_index;
+
+	int uri_start;
+	int args_start;
+	int content_start;
 
 	enum State {
 		p_request_line=0,
@@ -70,6 +71,7 @@ public:
 	const char *getQuery();
 	const char *getValue(const char *key);
 	int getContentLength();
+	bool parseRequestLine();
 	void clear();
 	virtual ~HTTPParser();
 };
