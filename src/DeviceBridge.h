@@ -2,7 +2,7 @@
  *  Project Bahamut: full ad-hoc tunneling software to be used by the
  *  Playstation Portable (PSP) to emulate online features.
  *
- *  Copyright (C) 2008  Codestation
+ *  Copyright (C) 2008-2010  Codestation
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,15 +16,6 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * File Description:
- *     Sends the capture packets to a main server, then receive the
- *     packets of the other clients and injects on the interface
- *
- * Special Notes:
- *     TODO: get rid of all those static things :/
  */
 
 #ifndef DEVICEBRIDGE_H_

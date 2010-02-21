@@ -18,14 +18,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * File Description:
- *     Startup file
- * Special Notes:
- *     TODO: more cleanup, remove all the possible code and make some API
- *     		 to communicate with the UI
- */
-
 #ifdef _WIN32
 #define WINVER 0x0501 //Windows XP
 #include <windows.h>

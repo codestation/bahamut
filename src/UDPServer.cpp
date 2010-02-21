@@ -2,7 +2,7 @@
  *  Project Bahamut: full ad-hoc tunneling software to be used by the
  *  Playstation Portable (PSP) to emulate online features.
  *
- *  Copyright (C) 2008  Codestation
+ *  Copyright (C) 2008-2010  Codestation
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,13 +16,6 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * File Description:
- *     UDP Server engine
- * Special Notes:
- *     TODO: remove debug messages, more error checking
  */
 
 #include "UDPServer.h"
@@ -54,102 +47,94 @@ int UDPServer::run() {
 	if(server_id == 0)
 		server_id++;
 	printf("== Server: Initializing UDP server, ID: %X\n", server_id);
-	sock = new ServerSocket(port, ServerSocket::UDP_SOCKET);
-#ifdef _WIN32
-	if(sock->WSAStart()) {
-#endif
-		if(sock->bindSocket()) {
-			Packet *packet = new Packet();
-			List *client = new List(compareFunc, deleteFunc);
-			ClientInfo info;
-			int size;
-			while(loop_flag) {
-				if((size = sock->receive(packet, &info)) == -1) {
-					if(!sock->readAgain()) {
-						ERR("== Server: error occurred while receiving packet\n");
-						ERR("== Server: %s (%i)\n", sock->getLastErrorMessage(), sock->getLastError());
-					}
-					continue;
+	sock = new ServerSocket(port);
+	if(sock->bindSocket(AbstractSocket::UDP_SOCKET)) {
+		Packet *packet = new Packet();
+		List *client = new List(compareFunc, deleteFunc);
+		ClientInfo info;
+		int size;
+		while(loop_flag) {
+			if((size = sock->receiveData(packet, &info)) == -1) {
+				if(!sock->readAgain()) {
+					ERR("== Server: error occurred while receiving packet\n");
+					ERR("== Server: %s (%i)\n", sock->getLastErrorMessage(), sock->getLastError());
 				}
-				total_size_received += size;
-				total_received++;
-				if(packet->checkHeader()) {
-					ClientInfo *dev = (ClientInfo *)client->get(&info);
-					if(dev == NULL) {
-						dev = new ClientInfo(&info);
-						client->add(dev);
-						dev->setID(packet->getID());
-						printf("== Server: Registered new client from %s:%i\n", dev->getIPstr(), dev->getPort());
-						printf("== Server: Total clients: %i\n", client->count());
-					} else {
-						if(packet->getID() == 0) {
-							printf("== Server: Unregistering %s:%i\n", dev->getIPstr(), dev->getPort());
-							if(client->remove(dev))
-								printf("== Server: Clients left: %i\n", client->count());
-							continue;
-						} else {
-							if(dev->getID() != packet->getID()) {
-								printf("== Server: The client %s:%i's ID has changed (OLD: %X, NEW: %X), updating...\n", dev->getIPstr(), dev->getPort(), dev->getID(), packet->getID());
-								dev->setID(packet->getID());
-								dev->setrCounter(0);
-								dev->setsCounter(0);
-								dev->clearDevices();
-							} else {
-								if(order && packet->getCounter() <= dev->getrCounter()) {
-									//printf("=== Server: Packet arrives at wrong order (ID = %X, Expected > %i, Received = %i). Discarding..\n", dev->getID(), dev->getrCounter(), packet->getPacketCounter());
-									total_droped++;
-									continue;
-								}
-							}
-						}
-					}
-					EthPacket eth_packet(packet->getPayload());
-					//eth_packet.hexdump();
-					if(dev->addDevice(eth_packet.getSrcMAC(),0)) {
-						printf("== Server: received MAC: %s from %s:%i\n", eth_packet.getSrcMACstr(), info.getIPstr(), info.getPort());
-					}
-					if(order)
-						dev->setrCounter(packet->getCounter());
-					client->rewind();
-					while(client->hasNext()) {
-						ClientInfo *cl = (ClientInfo *)client->next();
-						if(dev != cl) {
-							if(eth_packet.isBroadcast() || cl->findDevice((u_char *)eth_packet.getDstMAC())) {
-								packet->setID(server_id);
-								if(order) {
-									packet->setCounter(cl->getsCounter());
-									cl->setsCounter(cl->getsCounter() + 1);
-								}
-								total_sent++;
-								total_size_sent += size;
-								if(sock->send( packet, cl) == -1) {
-									printf("== Server: error occurred while sending packet\n");
-								}
-							}
-						}
-					}
-				} else {
-					printf("== Server: Unknown packet. Discarding...\n");
-				}
+				continue;
 			}
-			delete packet;
-			delete client;
-			sock->closeSocket();
-			printf("\n*** == Server: server finished. Statistics of use:\n");
-			printf("*** == Server: Total packets received: %i\n", total_received);
-			printf("*** == Server: Total packets sent: %i\n", total_sent);
-			printf("*** == Server: Total packets dropped: %i\n", total_droped);
-			printf("*** == Server: Total bytes received: %i\n", total_size_received);
-			printf("*** == Server: Total bytes sent: %i\n", total_size_sent);
-		} else {
-			printf("Error while binding the socket\n");
+			total_size_received += size;
+			total_received++;
+			if(packet->checkHeader()) {
+				ClientInfo *dev = (ClientInfo *)client->get(&info);
+				if(dev == NULL) {
+					dev = new ClientInfo(&info);
+					client->add(dev);
+					dev->setID(packet->getID());
+					printf("== Server: Registered new client from %s:%i\n", dev->getIPstr(), dev->getPort());
+					printf("== Server: Total clients: %i\n", client->count());
+				} else {
+					if(packet->getID() == 0) {
+						printf("== Server: Unregistering %s:%i\n", dev->getIPstr(), dev->getPort());
+						if(client->remove(dev))
+							printf("== Server: Clients left: %i\n", client->count());
+						continue;
+					} else {
+						if(dev->getID() != packet->getID()) {
+							printf("== Server: The client %s:%i's ID has changed (OLD: %X, NEW: %X), updating...\n", dev->getIPstr(), dev->getPort(), dev->getID(), packet->getID());
+							dev->setID(packet->getID());
+							dev->setrCounter(0);
+							dev->setsCounter(0);
+							dev->clearDevices();
+						} else {
+							if(order && packet->getCounter() <= dev->getrCounter()) {
+								//printf("=== Server: Packet arrives at wrong order (ID = %X, Expected > %i, Received = %i). Discarding..\n", dev->getID(), dev->getrCounter(), packet->getPacketCounter());
+								total_droped++;
+								continue;
+							}
+						}
+					}
+				}
+				EthPacket eth_packet(packet->getPayload());
+				//eth_packet.hexdump();
+				if(dev->addDevice(eth_packet.getSrcMAC(),0)) {
+					printf("== Server: received MAC: %s from %s:%i\n", eth_packet.getSrcMACstr(), info.getIPstr(), info.getPort());
+				}
+				if(order)
+					dev->setrCounter(packet->getCounter());
+				client->rewind();
+				while(client->hasNext()) {
+					ClientInfo *cl = (ClientInfo *)client->next();
+					if(dev != cl) {
+						if(eth_packet.isBroadcast() || cl->findDevice((u_char *)eth_packet.getDstMAC())) {
+							packet->setID(server_id);
+							if(order) {
+								packet->setCounter(cl->getsCounter());
+								cl->setsCounter(cl->getsCounter() + 1);
+							}
+							total_sent++;
+							total_size_sent += size;
+							if(sock->sendData( packet, cl) == -1) {
+								printf("== Server: error occurred while sending packet\n");
+							}
+						}
+					}
+				}
+			} else {
+				printf("== Server: Unknown packet. Discarding...\n");
+			}
 		}
-		delete sock;
-#ifdef _WIN32
+		delete packet;
+		delete client;
+		sock->closeSocket();
+		printf("\n*** == Server: server finished. Statistics of use:\n");
+		printf("*** == Server: Total packets received: %i\n", total_received);
+		printf("*** == Server: Total packets sent: %i\n", total_sent);
+		printf("*** == Server: Total packets dropped: %i\n", total_droped);
+		printf("*** == Server: Total bytes received: %i\n", total_size_received);
+		printf("*** == Server: Total bytes sent: %i\n", total_size_sent);
 	} else {
-		printf("== Server: error calling WSAStart\n");
+		printf("Error while binding the socket\n");
 	}
-#endif
+	delete sock;
 	return 0;
 }
 

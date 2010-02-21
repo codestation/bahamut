@@ -2,7 +2,7 @@
  *  Project Bahamut: full ad-hoc tunneling software to be used by the
  *  Playstation Portable (PSP) to emulate online features.
  *
- *  Copyright (C) 2008  Codestation
+ *  Copyright (C) 2008-2010  Codestation
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,24 +18,13 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * File Description:
- *     Holds the packet info/data and makes easy access some packet structures
- * Special Notes:
- *		TODO: none yet
- */
-
-#ifndef PSPPACKET_H_
-#define PSPPACKET_H_
+#ifndef PACKET_H_
+#define PACKET_H_
 
 #ifdef _WIN32
 #define WINVER 0x0501 //Windows XP
 #include <windows.h>
 #endif
-
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
 
 #include "EthPacket.h"
 
@@ -43,26 +32,6 @@
 
 class Packet {
 private:
-	//make the structure 1 byte-aligned (gaps in a packet are bad)
-/*	#pragma pack(push,1)
-	//simplified version of a eth packet
-	struct psp_packet {
-		u_short pkt_type;
-		u_int pkt_counter;
-		u_char padding[12];
-		u_char data[1454];
-	};
-	#pragma pack(pop)
-*/
-/*	#pragma pack(push,1)
-	struct eth_packet {
-		u_char dst_mac[6];
-		u_char src_mac[6];
-		u_char eth_type[2];
-		struct psp_packet payload;
-	};
-	#pragma pack(pop)
-*/
 	#pragma pack(push,1)
 	struct header_data {
 		u_char head[2];
@@ -102,4 +71,4 @@ public:
 	virtual ~Packet();
 };
 
-#endif /*PSPPACKET_H_*/
+#endif /*PACKET_H_*/

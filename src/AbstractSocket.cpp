@@ -1,8 +1,21 @@
 /*
- * AbstractSocket.cpp
+ *  Project Bahamut: full ad-hoc tunneling software to be used by the
+ *  Playstation Portable (PSP) to emulate online features.
  *
- *  Created on: 02/02/2010
- *      Author: code
+ *  Copyright (C) 2008-2010  Codestation
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "AbstractSocket.h"
@@ -11,11 +24,11 @@
 bool AbstractSocket::init = false;
 #endif
 
-
 AbstractSocket::AbstractSocket() {
 	sock = 0;
-	proto = 0;
-	port = 0;
+#ifdef _WIN32
+	lpMsgBuf = 0;
+#endif
 }
 
 #ifdef _WIN32
@@ -25,7 +38,7 @@ AbstractSocket::AbstractSocket() {
  * 		none
  * Returns: true if u can use the socket function, false otherwise
 */
-bool Socket::WSAStart() {
+bool AbstractSocket::WSAStart() {
 	if(!init) {
 		WSADATA info;
 		if(!WSAStartup(MAKEWORD(2,2), &info))
@@ -41,7 +54,7 @@ bool Socket::WSAStart() {
  * 		none
  * Returns: void
 */
-void Socket::WSAClean() {
+void AbstractSocket::WSAClean() {
 	if(init) {
 		WSACleanup();
 		init = false;
@@ -87,5 +100,9 @@ void AbstractSocket::closeSocket() {
 }
 
 AbstractSocket::~AbstractSocket() {
-	// TODO Auto-generated destructor stub
+	closeSocket();
+#ifdef _WIN32
+	if(lpMsgBuf)
+		LocalFree(lpMsgBuf);
+#endif
 }

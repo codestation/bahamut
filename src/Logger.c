@@ -18,11 +18,4 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * File Description:
- *     Logger function with enable/disable capabilities
- * Special Notes:
- *		none
- */
-
 int log_enabled = 0;

@@ -1,3 +1,4 @@
 * Comment the rest of the source code (yes i am lazy >.>)
 * Make a main server (to login, room creation, etc)
+* Finish the impletentation of the Web GUI
 * More to come when all of the above is ready :)

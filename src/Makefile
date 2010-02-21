@@ -21,6 +21,7 @@ OBJS = main.o			\
 		SpeedThread.o	\
 		HTTPParser.o	\
 		HTTPResponse.o	\
+		AbstractSocket.o \
 		ArgParser.o
 
 SVNREV:= -D'SVN_REV="$(shell LC_ALL=C svnversion -cn ../ | sed -e "s/.*://" -e "s/\([0-9]*\).*/\1/" | grep "[0-9]" )"'

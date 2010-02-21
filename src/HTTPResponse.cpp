@@ -1,8 +1,21 @@
 /*
- * HTTPHeader.cpp
+ *  Project Bahamut: full ad-hoc tunneling software to be used by the
+ *  Playstation Portable (PSP) to emulate online features.
  *
- *  Created on: 18/02/2010
- *      Author: code
+ *  Copyright (C) 2008-2010  Codestation
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <stdarg.h>
@@ -35,12 +48,13 @@ HTTPResponse::HTTPResponse() {
 }
 
 const char *HTTPResponse::getDate(time_t *tv) {
+#ifdef _WIN32
+	//_gmtime(&t, &local);
+	//asctime(date_buffer, sizeof(date_buffer),local);
+	strcpy(date_buffer, "Sun Feb 21 20:57:57 2010\n");
+#else
 	tm local;
 	time_t t = time(tv);
-#ifdef _WIN32
-	_gmtime_s(&t, &local);
-	asctime_s(date_buffer, sizeof(date_buffer),local);
-#else
 	gmtime_r(&t, &local);
 	asctime_r(&local, date_buffer);
 #endif
@@ -69,7 +83,7 @@ bool HTTPResponse::pushHeader(const char *format, ...) {
 }
 
 int HTTPResponse::sendHeader(Socket *s) {
-	return s->writeSocket(buffer, buffer_pos);
+	return s->sendData(buffer, buffer_pos);
 }
 
 int HTTPResponse::isDirectory(const char *uri) {
@@ -124,7 +138,7 @@ int HTTPResponse::sendError(Socket *s, int code, const char *reason, bool close)
 
 			while(!feof(fd)) {
 				int size = fread(buffer, 1, sizeof(buffer) ,fd);
-				s->writeSocket(buffer, size);
+				s->sendData(buffer, size);
 			}
 			fclose(fd);
 			clear();
@@ -136,7 +150,7 @@ int HTTPResponse::sendError(Socket *s, int code, const char *reason, bool close)
 	pushHeader(length, size);
 	pushHeader(empty);
 	sendHeader(s);
-	s->writeSocket(builtin_msg, size);
+	s->sendData(builtin_msg, size);
 	clear();
 	return 1;
 }
@@ -165,7 +179,7 @@ int HTTPResponse::sendFile(Socket *s, const char *uri) {
 			sendHeader(s);
 			while(!feof(fd)) {
 				int size = fread(buffer, 1, sizeof(buffer) ,fd);
-				s->writeSocket(buffer, size);
+				s->sendData(buffer, size);
 			}
 			fclose(fd);
 			clear();
@@ -185,7 +199,7 @@ int HTTPResponse::sendData(Socket *s, const char *data, int size, const char *mi
 	pushHeader(date, getDate());
 	pushHeader(empty);
 	sendHeader(s);
-	s->writeSocket(data, size);
+	s->sendData(data, size);
 	clear();
 	return 0;
 }

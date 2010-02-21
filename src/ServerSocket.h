@@ -2,7 +2,7 @@
  *  Project Bahamut: full ad-hoc tunneling software to be used by the
  *  Playstation Portable (PSP) to emulate online features.
  *
- *  Copyright (C) 2008  Codestation
+ *  Copyright (C) 2008-2010  Codestation
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,14 +16,6 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * File Description:
- *     TCP/UDP Server functions
- * Special Notes:
- *     TODO: finish the TCP implementation
- *     		 Posible merge with Socket class
  */
 
 #ifndef SERVERSOCKET_H_
@@ -44,67 +36,18 @@
 #include "Packet.h"
 #include "ClientInfo.h"
 #include "Socket.h"
+#include "AbstractSocket.h"
 
-class ServerSocket {
-private:
-	int sock;
-	int port;
-	int proto;
-	//timeval timeout;
-	//fd_set readfds;
-#ifdef _WIN32
-	typedef int socklen_t;
-	static bool init;
-	LPVOID lpMsgBuf;
-#endif
+class ServerSocket: public AbstractSocket {
 
 public:
-	enum socket_type {TCP_SOCKET, UDP_SOCKET};
-
-	ServerSocket(int port, socket_type proto);
-#ifdef _WIN32
-	bool WSAStart();
-	void WSAClean();
-#endif
-	bool bindSocket();
+	ServerSocket(int port);
+	bool bindSocket(socket_type proto);
 	//bool readAvailable();
 	bool listenConnection(int max);
 	Socket *acceptConnection();
 	int receive(Packet *packet, ClientInfo *info);
 	int send(Packet *packet, ClientInfo *info);
-	inline const char *getLastErrorMessage() {
-#ifdef _WIN32
-		if(lpMsgBuf)
-			LocalFree(lpMsgBuf);
-			FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
-				FORMAT_MESSAGE_FROM_SYSTEM |
-				FORMAT_MESSAGE_IGNORE_INSERTS, NULL, WSAGetLastError(),
-				MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-				(LPTSTR) &lpMsgBuf,
-				0, NULL);
-		return (const char *)lpMsgBuf;
-#else
-		return strerror(errno);
-#endif
-	}
-
-	inline bool readAgain() {
-#ifdef _WIN32
-		return WSAGetLastError() == WSAEWOULDBLOCK || WSAETIMEDOUT;
-#else
-		return errno == EAGAIN;
-#endif
-	}
-
-	inline int getLastError() {
-#ifdef _WIN32
-		return WSAGetLastError();
-#else
-		return errno;
-#endif
-	}
-
-	void closeSocket();
 	virtual ~ServerSocket();
 };
 

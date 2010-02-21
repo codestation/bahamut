@@ -1,8 +1,21 @@
 /*
- * AbstractSocket.h
+ *  Project Bahamut: full ad-hoc tunneling software to be used by the
+ *  Playstation Portable (PSP) to emulate online features.
  *
- *  Created on: 02/02/2010
- *      Author: code
+ *  Copyright (C) 2008-2010  Codestation
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifndef ABSTRACTSOCKET_H_
@@ -13,9 +26,8 @@
 #include <windows.h>
 #include <winsock2.h>
 #else
+#include <stdlib.h>
 #include <unistd.h>
-#include <netdb.h>
-#include <netinet/in.h>
 #include <errno.h>
 #endif
 #include "Packet.h"
@@ -23,21 +35,30 @@
 
 
 class AbstractSocket {
-private:
-	int sock;
-	int port;
-	int proto;
+
 #ifdef _WIN32
+	LPVOID lpMsgBuf;
 	static bool init;
 #endif
+
+protected:
+	int sock;
+	int port;
+#ifdef _WIN32
+	typedef int socklen_t;
+#endif
+
 public:
 	enum socket_type {TCP_SOCKET, UDP_SOCKET};
 
-	AbstractSocket();
 #ifdef _WIN32
-	bool Socket::WSAStart();
-	void Socket::WSAClean();
+protected:
+	bool WSAStart();
+	void WSAClean();
 #endif
+
+public:
+	AbstractSocket();
 	ssize_t receiveData(char *buffer, size_t size);
 	ssize_t receiveData(Packet *packet);
 	ssize_t receiveData(Packet *packet, ClientInfo *info);
@@ -46,6 +67,58 @@ public:
 	ssize_t sendData(Packet *packet, ClientInfo *info);
 	void closeSocket();
 	virtual ~AbstractSocket();
+
+	inline int getDescriptor() { return sock; }
+	inline void shutdownSocket() {
+#ifdef _WIN32
+		shutdown(sock, SD_BOTH);
+#else
+		shutdown(sock, SHUT_RDWR);
+#endif
+		}
+
+	inline const char *getLastErrorMessage() {
+#ifdef _WIN32
+		if(lpMsgBuf)
+			LocalFree(lpMsgBuf);
+			FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
+				FORMAT_MESSAGE_FROM_SYSTEM |
+				FORMAT_MESSAGE_IGNORE_INSERTS,
+				NULL,
+				WSAGetLastError(),
+				MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+				(LPTSTR) &lpMsgBuf,
+				0,
+				NULL);
+		return (const char *)lpMsgBuf;
+#else
+		return strerror(errno);
+#endif
+	}
+
+	inline bool readAgain() {
+#ifdef _WIN32
+		return WSAGetLastError() == WSAEWOULDBLOCK || WSAETIMEDOUT;
+#else
+		return errno == EAGAIN;
+#endif
+	}
+
+	inline int getLastError() {
+#ifdef _WIN32
+		return WSAGetLastError();
+#else
+		return errno;
+#endif
+	}
+
+	inline void ssleep(int seconds) {
+#ifdef _WIN32
+		Sleep(1000 * seconds);
+#else
+		sleep(seconds);
+#endif
+	}
 };
 
 #endif /* ABSTRACTSOCKET_H_ */

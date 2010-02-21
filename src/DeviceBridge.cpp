@@ -1,9 +1,8 @@
-
 /*
  *  Project Bahamut: full ad-hoc tunneling software to be used by the
  *  Playstation Portable (PSP) to emulate online features.
  *
- *  Copyright (C) 2008  Codestation
+ *  Copyright (C) 2008-2010  Codestation
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,15 +16,6 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- * File Description:
- *     Sends the capture packets to a main server, then receive the
- *     packets of the other clients and injects on the interface
- *
- * Special Notes:
- *     TODO: more variables cleanup
  */
 
 #include "DeviceBridge.h"
@@ -60,7 +50,7 @@ DeviceBridge::DeviceBridge(bool packet_ordering, bool packet_buffering) {
 
 bool DeviceBridge::makeBridge(const char *dev, const char *host, int port) {
 	eth = new Interface(dev);
-	sock = new Socket(host, port, Socket::UDP_SOCKET);
+	sock = new Socket(host, port);
 	// doesnt return until connection end
 	bool res = makeBridge(eth, sock);
 	delete eth;
@@ -69,11 +59,7 @@ bool DeviceBridge::makeBridge(const char *dev, const char *host, int port) {
 }
 bool DeviceBridge::makeBridge(Interface *eth, Socket *sock) {
 	if(eth->open()) {
-#ifdef _WIN32
-		if(sock->WSAStart())
-			return false;
-#endif
-		if(sock->connectSocket()) {
+		if(sock->connectSocket(Socket::UDP_SOCKET)) {
 			char buffer_data[128];
 			INFO("Start of inject_thread. Starting thread\n");
 			this->start();
@@ -91,9 +77,6 @@ bool DeviceBridge::makeBridge(Interface *eth, Socket *sock) {
 			INFO("End of capture_callback. Finished loop\n");
 			this->stop();
 			this->wait();
-#ifdef _WIN32
-			sock->WSAClean();
-#endif
 			eth->close();
 			sock->closeSocket();
 			return true;
@@ -135,7 +118,7 @@ void DeviceBridge::capture(const struct pcap_pkthdr* packet_header, const u_char
 			}
 		}
 		//INFO("SRC: %s, DST: %s\n", eth_packet.getSrcMACstr(), eth_packet.getDstMACstr());
-		if(sock->writeSocket(cap_packet) < 0) {
+		if(sock->sendData(cap_packet) < 0) {
 			//INFO("capture_callback: end of stream reached. Finishing thread...\n");
 			//eth->breakLoop();
 			//ignoreCapture();
@@ -149,7 +132,7 @@ void DeviceBridge::unregisterClient() {
 	cap_packet->setPayload((u_char *)"END",3);
 	cap_packet->setID(0);
 	INFO("Sending unregister packet to server\n");
-	sock->writeSocket(cap_packet);
+	sock->sendData(cap_packet);
 	sock->closeSocket();
 }
 
@@ -158,7 +141,7 @@ int DeviceBridge::run() {
 	int size;
 	int server_conn = false;
 	while(capture_enabled) {
-		if((size = sock->readSocket(packet)) == -1) {
+		if((size = sock->receiveData(packet)) == -1) {
 			if(!sock->readAgain()) {
 				ERR("Errror while reading socket\n");
 				//capture_enabled = false;
