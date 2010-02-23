@@ -26,13 +26,13 @@
 #include <windows.h>
 #include <winsock2.h>
 #else
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
 #endif
-#include "Packet.h"
-#include "ClientInfo.h"
-
+#include <string.h>
 
 class AbstractSocket {
 
@@ -60,11 +60,9 @@ protected:
 public:
 	AbstractSocket();
 	ssize_t receiveData(char *buffer, size_t size);
-	ssize_t receiveData(Packet *packet);
-	ssize_t receiveData(Packet *packet, ClientInfo *info);
+	ssize_t receiveData(char *buffer, size_t size,  sockaddr *from, socklen_t from_size);
 	ssize_t sendData(const char *data, size_t length);
-	ssize_t sendData(Packet *packet);
-	ssize_t sendData(Packet *packet, ClientInfo *info);
+	ssize_t sendData(const char *buffer, size_t size,  sockaddr *to, socklen_t to_size);
 	void closeSocket();
 	virtual ~AbstractSocket();
 

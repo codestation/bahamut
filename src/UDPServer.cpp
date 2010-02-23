@@ -19,6 +19,7 @@
  */
 
 #include "UDPServer.h"
+#include "ClientInfo.h"
 #include "Logger.h"
 
 bool UDPServer::loop_flag = true;
@@ -54,7 +55,10 @@ int UDPServer::run() {
 		ClientInfo info;
 		int size;
 		while(loop_flag) {
-			if((size = sock->receiveData(packet, &info)) == -1) {
+			info.getSocketInfo();
+			info.getSocketSize();
+			if((size = sock->receiveData(packet->getData(), packet->getMaxPacketSize(), (sockaddr *)info.getSocketInfo(), info.getSocketSize())) == -1) {
+			//if((size = sock->receiveData(packet, &info)) == -1) {
 				if(!sock->readAgain()) {
 					ERR("== Server: error occurred while receiving packet\n");
 					ERR("== Server: %s (%i)\n", sock->getLastErrorMessage(), sock->getLastError());
@@ -112,7 +116,7 @@ int UDPServer::run() {
 							}
 							total_sent++;
 							total_size_sent += size;
-							if(sock->sendData( packet, cl) == -1) {
+							if(sock->sendData( packet->getData(), packet->getSize(), (sockaddr *)cl->getSocketInfo(), cl->getSocketSize()) == -1) {
 								printf("== Server: error occurred while sending packet\n");
 							}
 						}

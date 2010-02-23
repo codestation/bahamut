@@ -118,7 +118,7 @@ void DeviceBridge::capture(const struct pcap_pkthdr* packet_header, const u_char
 			}
 		}
 		//INFO("SRC: %s, DST: %s\n", eth_packet.getSrcMACstr(), eth_packet.getDstMACstr());
-		if(sock->sendData(cap_packet) < 0) {
+		if(sock->sendData(cap_packet->getData(), cap_packet->getSize()) < 0) {
 			//INFO("capture_callback: end of stream reached. Finishing thread...\n");
 			//eth->breakLoop();
 			//ignoreCapture();
@@ -132,7 +132,7 @@ void DeviceBridge::unregisterClient() {
 	cap_packet->setPayload((u_char *)"END",3);
 	cap_packet->setID(0);
 	INFO("Sending unregister packet to server\n");
-	sock->sendData(cap_packet);
+	sock->sendData(cap_packet->getData(), cap_packet->getSize());
 	sock->closeSocket();
 }
 
@@ -141,7 +141,7 @@ int DeviceBridge::run() {
 	int size;
 	int server_conn = false;
 	while(capture_enabled) {
-		if((size = sock->receiveData(packet)) == -1) {
+		if((size = sock->receiveData(packet->getData(), packet->getMaxPacketSize())) == -1) {
 			if(!sock->readAgain()) {
 				ERR("Errror while reading socket\n");
 				//capture_enabled = false;

@@ -22,7 +22,8 @@
 #define PARSER_H_
 
 #include <ctype.h>
-#include "StreamSocket.h"
+#include <stdlib.h>
+#include <string.h>
 #include "List.h"
 
 class HTTPParser {

@@ -27,7 +27,7 @@ extern int log_enabled;
 
 #define INFO_ON() log_enabled = 1;
 #define INFO_OFF() log_enabled = 0;
-#define INFO(format, ...) if(log_enabled) printf(format,  ## __VA_ARGS__)
-#define ERR(format, ...) fprintf(stderr, format,  ## __VA_ARGS__)
+#define INFO(format, ...) if(log_enabled) printf(format, ## __VA_ARGS__)
+#define ERR(format, ...) fprintf(stderr,"%s[%i] "format, __FILE__ , __LINE__ , ## __VA_ARGS__)
 
 #endif /* LOGGER_H_ */

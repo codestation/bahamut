@@ -47,7 +47,8 @@ int TCPThread::run() {
 						strcpy(buffer, response.getDate());
 						response.sendData(sock, buffer, strlen(buffer));
 					} else {
-						response.sendFile(sock, uri);
+
+						response.sendFile(sock, uri, parser.getValue("Range"));
 					}
 				}
 				parser.clear();

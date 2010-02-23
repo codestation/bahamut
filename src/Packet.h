@@ -61,7 +61,7 @@ public:
 	void setPayload(const u_char *data, size_t size);
 	void setPayload(EthPacket *pkt, size_t size);
 	void setCounter(int count);
-	u_char *getData();
+	char *getData();
 	EthPacket *getEthData();
 	u_char *getStrippedPacketData(u_int dst, u_int src);
 	u_short getPktType();

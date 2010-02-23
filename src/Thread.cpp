@@ -45,6 +45,16 @@ void Thread::start() {
 #endif
 }
 
+int Thread::startAndDetach() {
+	start();
+	return detach();
+}
+
+int Thread::startAndWait() {
+	start();
+	return wait();
+}
+
 int Thread::detach() {
 #ifdef _WIN32
 	return 0;

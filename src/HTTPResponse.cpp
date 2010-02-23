@@ -155,7 +155,7 @@ int HTTPResponse::sendError(Socket *s, int code, const char *reason, bool close)
 	return 1;
 }
 
-int HTTPResponse::sendFile(Socket *s, const char *uri) {
+int HTTPResponse::sendFile(Socket *s, const char *uri, const char *range) {
 	char tmp_buffer[256];
 	if(uri[strlen(uri)-1] == '/')
 		sprintf(tmp_buffer, "%s%sindex.html", WWWROOT, uri);
@@ -166,7 +166,30 @@ int HTTPResponse::sendFile(Socket *s, const char *uri) {
 		if(fd) {
 			fseek(fd, 0, SEEK_END);
 			long int size = ftell(fd);
-			fseek(fd, 0, SEEK_SET);
+			long int start = 0;
+			long int end = -1;
+			if(!range) {
+				fseek(fd, 0, SEEK_SET);
+			} else {
+				if(range[0] == '-') {
+					end = size;
+					start = end - atol(range + 1);
+					if(start < 0) {
+						sendError(s, 400, "Bad Request", true);
+						clear();
+					}
+				} else {
+					char *tmpbuf = strdup(range);
+					char *mid = strchr(tmpbuf, '-');
+					//if(strlen(tmpbuf) == (mid - tmpbuf)) {
+
+					//}
+					mid[0] = 0;
+					start = atol(tmpbuf);
+					free(tmpbuf);
+
+				}
+			}
 			pushHeader(response, 200, "OK");
 			pushHeader(type, getMime(tmp_buffer));
 			pushHeader(length, size);

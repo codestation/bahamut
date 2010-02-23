@@ -61,8 +61,8 @@ void Packet::setPayload(EthPacket *pkt, size_t size) {
 void Packet::setCounter(int count) {
 	packet->header.counter = count;
 }
-u_char *Packet::getData() {
-	return (u_char *)packet;
+char *Packet::getData() {
+	return (char *)packet;
 }
 EthPacket *Packet::getEthData() {
 	return new EthPacket(packet->data);

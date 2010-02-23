@@ -33,8 +33,6 @@
 #endif
 
 #include <string.h>
-#include "Packet.h"
-#include "ClientInfo.h"
 #include "Socket.h"
 #include "AbstractSocket.h"
 
@@ -46,8 +44,6 @@ public:
 	//bool readAvailable();
 	bool listenConnection(int max);
 	Socket *acceptConnection();
-	int receive(Packet *packet, ClientInfo *info);
-	int send(Packet *packet, ClientInfo *info);
 	virtual ~ServerSocket();
 };
 

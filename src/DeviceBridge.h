@@ -37,6 +37,7 @@
 #include "EthPacket.h"
 #include "SpeedThread.h"
 #include "Logger.h"
+#include "Packet.h"
 
 
 class DeviceBridge: public Thread {

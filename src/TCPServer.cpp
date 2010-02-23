@@ -32,20 +32,19 @@ int TCPServer::run() {
 			while(accept) {
 				if((s = ssock->acceptConnection())) {
 					INFO("Accepted connection from %s:%i\n", s->getIpAddress(), s->getPort());
-					TCPThread *thd = new TCPThread(s);
-					thd->start();
-					thd->detach();
+					(new TCPThread(s))->startAndDetach();
 				} else {
 					if(!ssock->readAgain())
 						ERR("Error while accepting incoming connection (%s)\n", ssock->getLastErrorMessage());
 				}
 			}
-			INFO("Waiting for the client threads to finish\n");
+			INFO("Waiting for the client threads to finish...\n");
 			ssleep(2);
-		} else
-			ERR("TCPServer: Cannot listen to socket (%s)\n", ssock->getLastErrorMessage());
+		} else {
+			ERR("Cannot listen to socket: (%s)\n", ssock->getLastErrorMessage());
+		}
 	else
-		ERR("TCPServer: Cant bind to port\n");
+		ERR("Cant bind to port: (%s)\n", ssock->getLastErrorMessage());
 	ssock->closeSocket();
 	return 0;
 }

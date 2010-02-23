@@ -18,8 +18,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SERVERTHREAD_H_
-#define SERVERTHREAD_H_
+#ifndef THREAD_H_
+#define THREAD_H_
 
 #ifdef _WIN32
 #define WINVER 0x0501 //Windows XP
@@ -48,8 +48,10 @@ public:
 	Thread();
 	void start();
 	int detach();
+	int startAndDetach();
 	int wait();
+	int startAndWait();
 	virtual ~Thread();
 };
 
-#endif /* SERVERTHREAD_H_ */
+#endif /* THREAD_H_ */

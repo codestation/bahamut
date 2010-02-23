@@ -66,25 +66,16 @@ ssize_t AbstractSocket::receiveData(char *buffer, size_t size) {
 	return recv(sock, buffer, size, 0);
 }
 
-ssize_t AbstractSocket::receiveData(Packet *packet) {
-	return recv(sock, (char *)packet->getData(), packet->getMaxPacketSize(), 0);
-}
-
-ssize_t AbstractSocket::receiveData(Packet *packet, ClientInfo *info) {
-	socklen_t addrlen = info->getSocketSize();
-	return recvfrom( sock, (char *)packet->getData(), packet->getMaxPacketSize(), 0, (struct sockaddr *)info->getSocketInfo(), &addrlen);
+ssize_t AbstractSocket::receiveData(char *buffer, size_t size, sockaddr *from, socklen_t from_size) {
+	return recvfrom(sock, buffer, size, 0, from, &from_size);
 }
 
 ssize_t AbstractSocket::sendData(const char *data, size_t length) {
 	return send(sock, data, length , 0);
 }
 
-ssize_t AbstractSocket::sendData(Packet *packet) {
-	return send(sock, (char *)packet->getData(), packet->getSize() , 0);
-}
-
-ssize_t AbstractSocket::sendData(Packet *packet, ClientInfo *info) {
-	return sendto( sock, (char *)packet->getData(), packet->getSize(), 0, (struct sockaddr *)info->getSocketInfo(),info->getSocketSize());
+ssize_t AbstractSocket::sendData(const char *data, size_t length, sockaddr *to, socklen_t to_size) {
+	return sendto( sock, data, length, 0, to, to_size);
 }
 
 void AbstractSocket::closeSocket() {
@@ -100,7 +91,7 @@ void AbstractSocket::closeSocket() {
 }
 
 AbstractSocket::~AbstractSocket() {
-	closeSocket();
+	//closeSocket();
 #ifdef _WIN32
 	if(lpMsgBuf)
 		LocalFree(lpMsgBuf);
