@@ -11,6 +11,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "Queue.h"
+#include "List.h"
 
 class QueryBuilder {
 	Queue *queue;
