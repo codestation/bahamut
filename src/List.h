@@ -21,24 +21,32 @@
 #ifndef LIST_H_
 #define LIST_H_
 
+#include <pthread.h>
+
 class List {
 private:
 	typedef int (*COMPARE_FUNC) (void *, void *);
 	typedef void (*DELETE_FUNC) (void *);
+	typedef void *(*COPY_FUNC) (void *);
 	COMPARE_FUNC comp;
 	DELETE_FUNC del;
+	COPY_FUNC cpy;
 	struct node {
 		void *obj;
+		//node *prev;
 		node *next;
-	} *head, *iter;
+	} *head, *tail, *iter;
 	int counter;
+	pthread_mutex_t *mutex;
 public:
-	List(COMPARE_FUNC, DELETE_FUNC);
+	List(COMPARE_FUNC, DELETE_FUNC, COPY_FUNC = 0);
 	void add(void *item);
 	void *get(void *);
 	void *getByIndex(int i);
 	bool exist(void *);
 	bool remove(void *);
+	void *pop();
+	List *copy(List *l);
 	int count();
 	bool empty();
 	void clear();

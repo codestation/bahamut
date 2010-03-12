@@ -20,12 +20,14 @@
 
 #include "List.h"
 
-List::List(COMPARE_FUNC cfunc, DELETE_FUNC dfunc) {
+List::List(COMPARE_FUNC cfunc, DELETE_FUNC dfunc, COPY_FUNC cpfunc) {
 	head = 0;
+	tail = 0;
 	iter = 0;
 	counter = 0;
 	comp = cfunc;
 	del = dfunc;
+	cpy = cpfunc;
 }
 
 void List::add(void *obj) {
@@ -33,13 +35,12 @@ void List::add(void *obj) {
 		head = new node;
 		head->obj = obj;
 		head->next = 0;
+		tail = head;
 	} else {
-		node *curr = head;
-		while(curr->next)
-			curr = curr->next;
-		curr->next = new node;
-		curr->next->obj = obj;
-		curr->next->next = 0;
+		tail->next = new node;
+		tail = tail->next;
+		tail->obj = obj;
+		tail->next = 0;
 	}
 	iter = head;
 	counter++;
@@ -51,6 +52,29 @@ void *List::get(void *obj) {
 		while(curr) {
 			if(!comp(curr->obj, obj))
 				return curr->obj;
+			curr = curr->next;
+		}
+	}
+	return 0;
+}
+
+void *List::pop() {
+	if(head) {
+		node *curr = head;
+		node *prev = head;
+		while(curr) {
+			if(curr == tail) {
+				prev->next = curr->next;
+				if(head == curr)
+					head = curr->next;
+				if(tail == curr)
+					tail = prev->next;
+				curr->next = 0;
+				iter = head;
+				counter--;
+				return curr;
+			}
+			prev = curr;
 			curr = curr->next;
 		}
 	}
@@ -77,6 +101,8 @@ bool List::remove(void *obj) {
 				prev->next = curr->next;
 				if(head == curr)
 					head = curr->next;
+				if(tail == curr)
+					tail = prev->next;
 				del(curr->obj);
 				delete curr;
 				iter = head;
@@ -90,14 +116,22 @@ bool List::remove(void *obj) {
 	return false;
 }
 
-int List::count() {
-	/*node *curr = head;
-	int c = 0;
+List *List::copy(List *l) {
+	if(!cpy)
+		return 0;
+	List *ret = new List(comp, del);
+	node *curr = head;
 	while(curr) {
+		node *tmp = new node;
+		tmp->obj = cpy(curr->obj);
+		tmp->next = 0;
+		ret->add(tmp);
 		curr = curr->next;
-		c++;
 	}
-	return c;*/
+	return ret;
+}
+
+int List::count() {
 	return counter;
 }
 
@@ -110,6 +144,7 @@ void List::clear() {
 		head = next;
 	}
 	iter = head;
+	tail = head;
 	counter = 0;
 }
 

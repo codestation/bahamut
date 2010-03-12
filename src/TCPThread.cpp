@@ -37,32 +37,23 @@ int TCPThread::run() {
 		int read = sock->receiveData(data, sizeof(data));
 		if(read > 0) {
 			int result = parser.addData(data, read);
-			if(result == HTTPParser::PARSE_COMPLETE) {
-				const char *uri = parser.getURI();
-				if(strlen(uri) > 127)
-					response.sendError(sock, 500, "Internal server error");
-				else {
-					if(!strcmp(uri,"/query")) {
-						char buffer[128];
-						strcpy(buffer, response.getDate());
-						response.sendData(sock, buffer, strlen(buffer));
-					} else {
-
-						response.sendFile(sock, uri, parser.getValue("Range"));
-					}
-				}
-				parser.clear();
-			} else {
-				if(result == HTTPParser::PARSE_ERROR) {
-					response.sendError(sock, 400, "Bad Request", true);
-					parser.clear();
-					break;
-				} else if(result == HTTPParser::PARSE_BUFFER_FULL) {
-					response.sendError(sock, 414, "Request-URI Too Long", true);
-					parser.clear();
-					break;
-				}
+			switch(result) {
+			case HTTPParser::PARSE_COMPLETE:
+				response.generateResponse(&parser, sock);
+				break;
+			case HTTPParser::PARSE_INCOMPLETE:
+				//DEBUG("Received %i bytes of data so far\n", read, sock->getDescriptor());
+				continue;
+			case HTTPParser::PARSE_BUFFER_FULL:
+				response.sendError(sock, 414, HTTPResponse::error_414_reason, true);
+				break;
+			case HTTPParser::PARSE_ERROR:
+				response.sendError(sock, 400, HTTPResponse::error_400_reason, true);
+				break;
+			default:
+				response.sendError(sock, 500, HTTPResponse::error_500_reason);
 			}
+			parser.clear();
 		} else {
 			if(read < 0) {
 				if(sock->getLastError() == 0) {
@@ -70,14 +61,13 @@ int TCPThread::run() {
 					break;
 				}
 				if(!sock->readAgain()) {
-					ERR("== TCPThread: error occurred while receiving packet\n");
-					ERR("== TCPThread: %s (%i)\n", sock->getLastErrorMessage(), sock->getLastError());
+					ERR("error occurred while receiving packet: %s\n", sock->getLastErrorMessage());
 				}
 			}
 		}
 	}
 	sock->shutdownSocket();
-	INFO("== TCPThread: Connection closed with %s:%i\n", sock->getIpAddress(), sock->getPort());
+	INFO("Connection closed with %s:%i\n", sock->getIpAddress(), sock->getPort());
 	delete sock;
 	delete this;
 	return 0;

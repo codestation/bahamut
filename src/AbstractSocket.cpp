@@ -36,7 +36,7 @@ AbstractSocket::AbstractSocket() {
  * Socket initializer (must be called before any socket function)
  * Parameters:
  * 		none
- * Returns: true if u can use the socket function, false otherwise
+ * Returns: true if you can use the socket function, false otherwise
 */
 bool AbstractSocket::WSAStart() {
 	if(!init) {

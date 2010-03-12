@@ -43,14 +43,42 @@ const char *HTTPResponse::mime_text_plain = "text/plain";
 
 const char *HTTPResponse::error_template = "<h1>Error %i: %s</h1>";
 
+const char *HTTPResponse::error_400_reason = "Bad Request";
+const char *HTTPResponse::error_404_reason = "Not Found";
+const char *HTTPResponse::error_414_reason = "Request-URI Too Long";
+const char *HTTPResponse::error_500_reason = "Internal Server Error";
+const char *HTTPResponse::error_501_reason = "Not Implemented";
+
+
 HTTPResponse::HTTPResponse() {
 	buffer_pos = 0;
+}
+
+int HTTPResponse::generateResponse(HTTPParser *parser, Socket *s) {
+	if(strcmp(parser->getMethod(), "GET")) {
+		sendError(s, 501, HTTPResponse::error_501_reason, true);
+		return 1;
+	}
+	if(strlen(parser->getURI()) >= MAX_URI_SIZE) {
+		sendError(s, 500, HTTPResponse::error_500_reason, true);
+		return 1;
+	} else {
+		if(!strcmp(parser->getURI(),"/query")) {
+			char buffer[128];
+			strcpy(buffer, getDate());
+			return sendData(s, buffer, strlen(buffer));
+		} else {
+			return sendFile(s, parser->getURI(), parser->getValue("Range"));
+		}
+	}
+	return 0;
 }
 
 const char *HTTPResponse::getDate(time_t *tv) {
 #ifdef _WIN32
 	//_gmtime(&t, &local);
 	//asctime(date_buffer, sizeof(date_buffer),local);
+	//FIXME not implemented
 	strcpy(date_buffer, "Sun Feb 21 20:57:57 2010\n");
 #else
 	tm local;
@@ -116,7 +144,6 @@ const char *HTTPResponse::getMime(const char *uri) {
 }
 
 int HTTPResponse::sendError(Socket *s, int code, const char *reason, bool close) {
-
 	pushHeader(response, code, reason);
 	pushHeader(type, mime_text_html);
 	if(close)

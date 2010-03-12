@@ -141,8 +141,6 @@ void HTTPParser::parseHeader() {
 				}
 
 				if ( fsm[d].actions & STORE_KEY_VALUE ) {
-					// store position of first character of key.
-					//_keys.push_back( _keyIndex );
 					data_pair *pair = (data_pair *)malloc(sizeof(data_pair));
 					pair->key_pos = i;
 					pair->key_addr = buffer + key_index;
@@ -165,25 +163,65 @@ void HTTPParser::parseHeader() {
 	}
 
 	parsed_pos = buffer_pos;
-
 }
+/*
+void HTTPParser::parseArgs(char *args) {
+	int len = strlen(args);
+	char *key = args;
+	char *value = 0;
+	do {
+		switch(*args) {
+		case '=':
+			*args = 0;
+			value = args + 1;
+			break;
+		case '&':
+			*args = 0;
+			data_pair *dat = (data_pair *)malloc(sizeof(data_pair));
+			dat->key_pos = key - buffer;
+			dat->key_addr = key;
+			dat->value_addr = value;
+			arg->add(dat);
+		}
+	} while(args++);
+}*/
 
 bool HTTPParser::parseRequestLine()
 {
+	// find the URI start
 	char *str1 = (char *)memchr(buffer, ' ', sizeof(buffer));
 	if(!str1)
 		return false;
+	//find the URI end
 	char *str2 = (char *)memchr(str1 + 1, ' ', sizeof(buffer) - (str1 + 1 - buffer));
 	if(!str2)
 		return false;
 	str1[0] = 0;
 	str2[0] = 0;
 	uri_start = str1 - buffer + 1;
+	// find the arguments start (if any)
+	str1 = (char *)memchr(buffer + uri_start, '?', str2 - str1);
+	if(str1)
+		args_start = (str1 + 1) - buffer;
     return true;
+}
+
+HTTPParser::parser_state HTTPParser::getState() {
+	return parser_status;
+}
+
+const char *HTTPParser::getArgs() {
+	if(args_start > 0)
+		return buffer + args_start;
+	return 0;
 }
 
 const char *HTTPParser::getURI() {
 	return (const char *)buffer + uri_start;
+}
+
+const char *HTTPParser::getMethod() {
+	return buffer;
 }
 
 const char *HTTPParser::getValue(const char *key) {
@@ -193,6 +231,7 @@ const char *HTTPParser::getValue(const char *key) {
 
 int HTTPParser::compareFunc(void *obj, void *item) {
 	unsigned int key_pos = ((data_pair *)obj)->key_pos;
+	//unsigned int key_pos = ((data_pair *)obj)->key_addr - buffer;
 	unsigned int key_len = strlen((const char *)item);
 	if((key_pos + key_len) < sizeof(buffer))
 		return strncmp(((data_pair *)obj)->key_addr, (const char *)item, key_len);
@@ -205,6 +244,7 @@ void HTTPParser::deleteFunc(void *obj) {
 
 void HTTPParser::clear() {
 	list->clear();
+	args_start = 0;
 	buffer_pos = 0;
 	parser_status = PARSE_INCOMPLETE;
 }

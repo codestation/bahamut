@@ -26,13 +26,15 @@
 #include <string.h>
 #include "List.h"
 
+#define BUFFER_SIZE 4096
+
 class HTTPParser {
 
 public:
 	enum parser_state {PARSE_COMPLETE,PARSE_INCOMPLETE, PARSE_ERROR, PARSE_BUFFER_FULL};
 
 private:
-	char buffer[4096];
+	char buffer[BUFFER_SIZE];
 	List *list;
 
 	unsigned int buffer_pos;
@@ -47,6 +49,7 @@ private:
 		char *key_addr;
 		char *value_addr;
 	};
+
 
 	int key_index;
 	int value_index;
@@ -75,17 +78,19 @@ private:
 	static void deleteFunc(void *);
 
 	void parseHeader();
+	int getContentLength();
+	bool parseRequestLine();
 
 public:
-
 	HTTPParser();
 	parser_state addData(const char *data, int size);
 	const char *getURI();
+	const char *getArgs();
 	const char *getBody();
 	const char *getQuery();
+	const char *getMethod();
+	parser_state getState();
 	const char *getValue(const char *key);
-	int getContentLength();
-	bool parseRequestLine();
 	void clear();
 	virtual ~HTTPParser();
 };

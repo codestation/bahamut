@@ -47,7 +47,7 @@ void exit_signal(int signal) {
 int main(int argc, char ** argv) {
 	ArgParser opts;
 	if(!opts.parse(argc, argv)) {
-		ERR("Usage: bahamuth-engine -h <host> -p <port>  [-i <interface>] [-l] [-o] [-d]\n");
+		ERR("Usage: bahamuth-engine -h <host> -p <port>  [-i <interface>] [-l] [-o] [-d] [-v]\n");
 		return 1;
 	}
 	if(opts.verboseMode())

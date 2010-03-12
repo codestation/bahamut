@@ -26,8 +26,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "Socket.h"
+#include "HTTPParser.h"
 
 #define WWWROOT "/home/code/public"
+#define MAX_URI_SIZE 255
 
 class HTTPResponse {
 public:
@@ -47,17 +49,13 @@ public:
 	static const char *mime_application_stream;
 
 	static const char *error_template;
-/*
-	enum header_type {
-		HEADER_RESPONSE,
-		HEADER_DATE,
-		HEADER_TYPE,
-		HEADER_LENGTH,
-		HEADER_SERVER,
-		HEADER_MODIFIED,
-		HEADER_EMPTY
-	};
-*/
+
+	static const char *error_400_reason;
+	static const char *error_404_reason;
+	static const char *error_414_reason;
+	static const char *error_500_reason;
+	static const char *error_501_reason;
+
 private:
 	char buffer[1024];
 	char header_buffer[256];
@@ -68,6 +66,7 @@ public:
 	HTTPResponse();
 	bool pushHeader(const char *format, ...);
 	int sendHeader(Socket *s);
+	int generateResponse(HTTPParser *parser, Socket *s);
 	int sendFile(Socket *s, const char *uri, const char *range = NULL);
 	int sendData(Socket *s, const char *data, int size, const char *mime_type = mime_text_plain);
 	int sendError(Socket *s, int code, const char *reason, bool close = false);
