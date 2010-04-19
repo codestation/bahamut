@@ -25,19 +25,21 @@
 #define WINVER 0x0501 //Windows XP
 #include <windows.h>
 #endif
-
+#include <stdint.h>
 #include "EthPacket.h"
 
 #define MAX_PAYLOAD_SIZE 1486
+
+#define HEADER_MAGIC 0x484D  // MH
 
 class Packet {
 private:
 	#pragma pack(push,1)
 	struct header_data {
-		u_char head[2];
-		u_short id;
-		u_short counter;
-		u_short size;
+		uint16_t head;
+		uint16_t id;
+		uint16_t counter;
+		uint16_t size;
 	};
 	#pragma pack(pop)
 
@@ -52,20 +54,20 @@ private:
 	//temporary buffer to hold the MAC string
 public:
 	Packet();
-	u_int getCounter();
-	int getSize();
-	int getMaxPacketSize();
-	void setPayloadSize(int size);
-	const u_char *getPayload();
-	int getPayloadSize();
+	u_int getCounter() { return packet->header.counter; }
+	int getSize() { return packet->header.size + sizeof(header_data); }
+	int getMaxPacketSize() { return sizeof(packet_container); }
+	void setPayloadSize(int size) { packet->header.size = size; }
+	const u_char *getPayload() { return (u_char *)&packet->data; }
+	int getPayloadSize() { return packet->header.size; }
 	void setPayload(const u_char *data, size_t size);
 	void setPayload(EthPacket *pkt, size_t size);
-	void setCounter(int count);
-	char *getData();
-	EthPacket *getEthData();
+	void setCounter(int count) { packet->header.counter = count; }
+	char *getData() { return (char *)packet; }
+	EthPacket *getEthData() { return new EthPacket(packet->data); }
 	u_char *getStrippedPacketData(u_int dst, u_int src);
 	u_short getPktType();
-	bool checkHeader();
+	bool checkHeader() { return packet->header.head == HEADER_MAGIC; }
 	inline void setID(u_int id) { packet->header.id = id; }
 	inline u_int getID() { return packet->header.id; }
 	virtual ~Packet();

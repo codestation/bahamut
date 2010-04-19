@@ -22,34 +22,12 @@
 
 Packet::Packet() {
 	packet = new packet_container;
-	packet->header.head[0] = 'M';
-	packet->header.head[1] = 'H';
+	packet->header.head = HEADER_MAGIC;
 	packet->header.id = 0;
 	packet->header.counter = 0;
 	packet->header.size = sizeof(packet->data);
 }
-u_int Packet::getCounter() {
-	return packet->header.counter;
-}
-int Packet::getSize() {
-	return packet->header.size + sizeof(header_data);
-}
-/*
-int Packet::getStrippedPacketSize() {
-	return packet->header.size + 1;
-}*/
-int Packet::getMaxPacketSize() {
-	return sizeof(packet_container);
-}
-void Packet::setPayloadSize(int size) {
-	packet->header.size = size;
-}
-int Packet::getPayloadSize() {
-	return packet->header.size;
-}
-const u_char *Packet::getPayload() {
-	return (u_char *)&packet->data;
-}
+
 void Packet::setPayload(const u_char *data, size_t size) {
 	memcpy(&packet->data, data, size);
 	packet->header.size = size;
@@ -57,19 +35,6 @@ void Packet::setPayload(const u_char *data, size_t size) {
 void Packet::setPayload(EthPacket *pkt, size_t size) {
 	memcpy(&packet->data, pkt->data(), size);
 	packet->header.size = size;
-}
-void Packet::setCounter(int count) {
-	packet->header.counter = count;
-}
-char *Packet::getData() {
-	return (char *)packet;
-}
-EthPacket *Packet::getEthData() {
-	return new EthPacket(packet->data);
-}
-
-bool Packet::checkHeader() {
-	return packet->header.head[0] == 'M' && packet->header.head[1] == 'H';
 }
 
 Packet::~Packet() {
