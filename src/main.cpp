@@ -44,7 +44,7 @@ void exit_signal(int signal) {
 		tcp_serv->stop();
 }
 
-int main2(int argc, char ** argv) {
+int main(int argc, char ** argv) {
 	ArgParser opts;
 	if(!opts.parse(argc, argv)) {
 		INFO("Usage: bahamuth-engine -h <host> -p <port>  [-i <interface>] [-l] [-o] [-d] [-v]\n\n");
