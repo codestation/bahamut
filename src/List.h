@@ -20,9 +20,9 @@
 
 #ifndef LIST_H_
 #define LIST_H_
-
+#ifndef _WIN32
 #include <pthread.h>
-
+#endif
 class List {
 private:
 	typedef int (*COMPARE_FUNC) (void *, void *);
@@ -33,13 +33,13 @@ private:
 	COPY_FUNC cpy;
 	struct node {
 		void *obj;
-		//node *prev;
 		node *next;
+		int counter;
 	} *head, *tail, *iter;
 	int counter;
-	pthread_mutex_t *mutex;
+	node *create(void *obj);
 public:
-	List(COMPARE_FUNC, DELETE_FUNC, COPY_FUNC = 0);
+	List(COMPARE_FUNC, DELETE_FUNC = 0, COPY_FUNC = 0);
 	void add(void *item);
 	void *get(void *);
 	void *getByIndex(int i);

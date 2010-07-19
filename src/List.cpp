@@ -30,30 +30,34 @@ List::List(COMPARE_FUNC cfunc, DELETE_FUNC dfunc, COPY_FUNC cpfunc) {
 	cpy = cpfunc;
 }
 
+List::node *List::create(void *obj) {
+	node *ret = new node;
+	ret->obj = obj;
+	ret->next = 0;
+	ret->counter = 1;
+	return ret;
+}
+
 void List::add(void *obj) {
 	if(!head) {
-		head = new node;
-		head->obj = obj;
-		head->next = 0;
+		//FIXME: atomic copy
+		head = create(obj);
 		tail = head;
 	} else {
-		tail->next = new node;
+		//FIXME: atomic copy
+		tail->next = create(obj);
 		tail = tail->next;
-		tail->obj = obj;
-		tail->next = 0;
 	}
-	iter = head;
 	counter++;
 }
 
 void *List::get(void *obj) {
-	if(head) {
-		node *curr = head;
-		while(curr) {
-			if(!comp(curr->obj, obj))
-				return curr->obj;
-			curr = curr->next;
-		}
+	node *curr = head;
+	__sync_fetch_and_add(&curr->counter, 1);
+	while(curr) {
+		if(!comp(curr->obj, obj))
+			return curr->obj;
+		curr = curr->next;
 	}
 	return 0;
 }
@@ -103,7 +107,8 @@ bool List::remove(void *obj) {
 					head = curr->next;
 				if(tail == curr)
 					tail = prev->next;
-				del(curr->obj);
+				if(del)
+					del(curr->obj);
 				delete curr;
 				iter = head;
 				counter--;
@@ -119,7 +124,7 @@ bool List::remove(void *obj) {
 List *List::copy(List *l) {
 	if(!cpy)
 		return 0;
-	List *ret = new List(comp, del);
+	List *ret = new List(comp, del, cpy);
 	node *curr = head;
 	while(curr) {
 		node *tmp = new node;
@@ -139,7 +144,8 @@ int List::count() {
 void List::clear() {
 	while(head) {
 		node *next = head->next;
-		del(head->obj);
+		if(del)
+			del(head->obj);
 		delete head;
 		head = next;
 	}

@@ -44,7 +44,7 @@ int TCPServer::run() {
 			ERR("Cannot listen to socket: (%s)\n", ssock->getLastErrorMessage());
 		}
 	else
-		ERR("Cant bind to port: (%s)\n", ssock->getLastErrorMessage());
+		ERR("Cant bind to port %i: (%s)\n", ssock->getPort(), ssock->getLastErrorMessage());
 	ssock->closeSocket();
 	return 0;
 }

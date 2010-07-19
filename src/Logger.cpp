@@ -18,4 +18,4 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-int log_enabled = 0;
+int log_enabled = 1;

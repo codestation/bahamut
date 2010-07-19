@@ -44,17 +44,23 @@ void exit_signal(int signal) {
 		tcp_serv->stop();
 }
 
-int main(int argc, char ** argv) {
+int main2(int argc, char ** argv) {
 	ArgParser opts;
 	if(!opts.parse(argc, argv)) {
-		ERR("Usage: bahamuth-engine -h <host> -p <port>  [-i <interface>] [-l] [-o] [-d] [-v]\n");
+		INFO("Usage: bahamuth-engine -h <host> -p <port>  [-i <interface>] [-l] [-o] [-d] [-v]\n\n");
+		INFO("-h    Connect to host (use localhost to create a server)\n");
+		INFO("-p    Local/remote port number\n");
+		INFO("-i    Network device to use\n");
+		INFO("-l    List network devices and exit\n");
+		INFO("-o    Disable packet ordering rule\n");
+		INFO("-d    Create dedicated server (dont open device)\n");
+		INFO("-v    Show debug output\n");
 		return 1;
 	}
-	if(opts.verboseMode())
-		INFO_ON();
+	if(!opts.verboseMode())
+		INFO_OFF();
 
 	if(opts.listInterfaces()) {
-		INFO_ON();
 		List *lst = Interface::getAdapterList();
 		if(!lst) {
 			ERR("Cant get the interface list. Exiting...\n");

@@ -8,13 +8,9 @@
 #ifndef QUEUE_H_
 #define QUEUE_H_
 
-#include <pthread.h>
-#include <string.h>
-
 class Queue {
 	typedef void (*DELETE_FUNC) (void *);
 	DELETE_FUNC del;
-	pthread_mutex_t mutex;
 	struct node {
 		void *data;
 		node *prev;

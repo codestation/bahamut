@@ -33,6 +33,7 @@ const char *HTTPResponse::server = "Server: %s\r\n";
 const char *HTTPResponse::date = "Date: %s\r\n";
 const char *HTTPResponse::connection = "Connection: %s\r\n";
 const char *HTTPResponse::modified = "Last-Modified: %s\r\n";
+//FIXME: use the ETag field
 const char *HTTPResponse::etag = "ETag: %s\r\n";
 const char *HTTPResponse::empty = "\r\n";
 
@@ -44,6 +45,7 @@ const char *HTTPResponse::mime_text_plain = "text/plain";
 const char *HTTPResponse::error_template = "<h1>Error %i: %s</h1>";
 
 const char *HTTPResponse::error_400_reason = "Bad Request";
+//FIXME: implement 403
 const char *HTTPResponse::error_404_reason = "Not Found";
 const char *HTTPResponse::error_414_reason = "Request-URI Too Long";
 const char *HTTPResponse::error_500_reason = "Internal Server Error";
@@ -64,6 +66,7 @@ int HTTPResponse::generateResponse(HTTPParser *parser, Socket *s) {
 		return 1;
 	} else {
 		if(!strcmp(parser->getURI(),"/query")) {
+			//TODO: real query support
 			char buffer[128];
 			strcpy(buffer, getDate());
 			return sendData(s, buffer, strlen(buffer));
@@ -128,7 +131,7 @@ int HTTPResponse::isDirectory(const char *uri) {
 time_t HTTPResponse::lastModified(const char *uri) {
 	struct stat statbuf;
 	if (stat(uri, &statbuf) == -1)
-		return NULL;
+		return 0;
 	return statbuf.st_mtime;
 }
 
