@@ -20,7 +20,9 @@
 
 #ifndef LIST_H_
 #define LIST_H_
-#ifndef _WIN32
+#ifdef _WIN32
+#include <windows.h>
+#else
 #include <pthread.h>
 #endif
 class List {
@@ -37,7 +39,15 @@ private:
 		int counter;
 	} *head, **tail, *iter;
 	int counter;
+#ifndef _WIN32
 	pthread_mutex_t lock;
+#else
+	void *lock;
+	inline int pthread_mutex_init(void *,int *) { return 0; }
+	inline int pthread_mutex_lock(void *) { return 0; }
+	inline int pthread_mutex_unlock(void *) { return 0; }
+	inline int pthread_mutex_destroy(void *) { return 0; }
+#endif
 	node *create(void *obj);
 public:
 	List(COMPARE_FUNC, DELETE_FUNC = 0, COPY_FUNC = 0);
