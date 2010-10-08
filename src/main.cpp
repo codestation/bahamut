@@ -57,8 +57,6 @@ int main(int argc, char ** argv) {
 		INFO("-v    Show debug output\n");
 		return 1;
 	}
-	if(!opts.verboseMode())
-		INFO_OFF();
 
 	if(opts.listInterfaces()) {
 		List *lst = Interface::getAdapterList();
@@ -75,6 +73,9 @@ int main(int argc, char ** argv) {
 		delete lst;
 		return 2;
 	}
+
+	if(!opts.verboseMode())
+		INFO_OFF();
 
 	INFO("Bahamut engine SVN r%s starting...\n", SVN_REV);
 
@@ -97,14 +98,14 @@ int main(int argc, char ** argv) {
 	signal(SIGINT, exit_signal);
 
 	if(strcmp(opts.getHost(), "localhost") == 0) {
-		//INFO("Creating UDP server...\n");
-		//udp_serv = new UDPServer(atoi(opts.getPort()), !opts.disableOrdering());
-		//INFO("Starting UDP server...\n");
-		//udp_serv->start();
+		INFO("Creating UDP server...\n");
+		udp_serv = new UDPServer(atoi(opts.getPort()), !opts.disableOrdering());
+		INFO("Starting UDP server...\n");
+		udp_serv->start();
 		//INFO("Creating TCP server...\n");
-		tcp_serv = new TCPServer(atoi(opts.getPort()));
-		INFO("Starting TCP server...\n");
-		tcp_serv->start();
+		//tcp_serv = new TCPServer(atoi(opts.getPort()));
+		//INFO("Starting TCP server...\n");
+		//tcp_serv->start();
 	}
 	if(!opts.dedicatedServer()) {
 		if(udp_serv)

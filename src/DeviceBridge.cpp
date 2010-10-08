@@ -107,11 +107,11 @@ void DeviceBridge::capture(const struct pcap_pkthdr* packet_header, const u_char
 			INFO("Packet destination is local, ignoring\n");
 			return;
 		}
-		if(remote_mac->empty()) {
-			INFO("Remote list empty. Discarding\n");
-			return;
-		}
 		if(!eth_packet.isBroadcast()) {
+			if(remote_mac->empty()) {
+				INFO("Remote list empty. Discarding\n");
+				return;
+			}
 			if(!remote_mac->exist((void *)eth_packet.getDstMAC())) {
 				INFO("Captured packet with unknown destination. Discarding\n");
 				return;
@@ -143,7 +143,7 @@ int DeviceBridge::run() {
 	while(capture_enabled) {
 		if((size = sock->receiveData(packet->getData(), packet->getMaxPacketSize())) == -1) {
 			if(!sock->readAgain()) {
-				ERR("Errror while reading socket\n");
+				ERR("Error while reading socket, server offline?\n");
 				//capture_enabled = false;
 				//eth->breakLoop();
 				//speed->stop();
@@ -169,6 +169,10 @@ int DeviceBridge::run() {
 						continue;
 					}
 				}
+			}
+			if(!remote_mac->exist((void *)packet->getEthData()->getSrcMAC())) {
+				remote_mac->add(new DeviceInfo(packet->getEthData()->getSrcMAC(), remote_mac->count()));
+				INFO("Registered new remote MAC: %s\n", packet->getEthData()->getSrcMAC());
 			}
 			if(order)
 				server_counter = packet->getCounter();

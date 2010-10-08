@@ -66,7 +66,6 @@ public:
 	int getPort() { return port; }
 	void closeSocket();
 	virtual ~AbstractSocket();
-
 	inline int getDescriptor() { return sock; }
 	inline void shutdownSocket() {
 #ifdef _WIN32
@@ -74,7 +73,7 @@ public:
 #else
 		shutdown(sock, SHUT_RDWR);
 #endif
-		}
+	}
 
 	inline const char *getLastErrorMessage() {
 #ifdef _WIN32
