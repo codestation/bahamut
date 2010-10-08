@@ -47,7 +47,7 @@ int UDPServer::run() {
 #endif
 	if(server_id == 0)
 		server_id++;
-	printf("== Server: Initializing UDP server, ID: %X\n", server_id);
+	INFO("== Server: Initializing UDP server, ID: %X\n", server_id);
 	sock = new ServerSocket(port);
 	if(sock->bindSocket(AbstractSocket::UDP_SOCKET)) {
 		Packet *packet = new Packet();
@@ -55,8 +55,6 @@ int UDPServer::run() {
 		ClientInfo info;
 		int size;
 		while(loop_flag) {
-			info.getSocketInfo();
-			info.getSocketSize();
 			if((size = sock->receiveData(packet->getData(), packet->getMaxPacketSize(), (sockaddr *)info.getSocketInfo(), info.getSocketSize())) == -1) {
 			//if((size = sock->receiveData(packet, &info)) == -1) {
 				if(!sock->readAgain()) {
@@ -73,17 +71,17 @@ int UDPServer::run() {
 					dev = new ClientInfo(&info);
 					client->add(dev);
 					dev->setID(packet->getID());
-					printf("== Server: Registered new client from %s:%i\n", dev->getIPstr(), dev->getPort());
-					printf("== Server: Total clients: %i\n", client->count());
+					INFO("== Server: Registered new client from %s:%i\n", dev->getIPstr(), dev->getPort());
+					INFO("== Server: Total clients: %i\n", client->count());
 				} else {
 					if(packet->getID() == 0) {
-						printf("== Server: Unregistering %s:%i\n", dev->getIPstr(), dev->getPort());
+						INFO("== Server: Unregistering %s:%i\n", dev->getIPstr(), dev->getPort());
 						if(client->remove(dev))
-							printf("== Server: Clients left: %i\n", client->count());
+							INFO("== Server: Clients left: %i\n", client->count());
 						continue;
 					} else {
 						if(dev->getID() != packet->getID()) {
-							printf("== Server: The client %s:%i's ID has changed (OLD: %X, NEW: %X), updating...\n", dev->getIPstr(), dev->getPort(), dev->getID(), packet->getID());
+							INFO("== Server: The client %s:%i's ID has changed (OLD: %X, NEW: %X), updating...\n", dev->getIPstr(), dev->getPort(), dev->getID(), packet->getID());
 							dev->setID(packet->getID());
 							dev->setrCounter(0);
 							dev->setsCounter(0);
@@ -100,7 +98,7 @@ int UDPServer::run() {
 				EthPacket eth_packet(packet->getPayload());
 				//eth_packet.hexdump();
 				if(dev->addDevice(eth_packet.getSrcMAC(),0)) {
-					printf("== Server: received MAC: %s from %s:%i\n", eth_packet.getSrcMACstr(), info.getIPstr(), info.getPort());
+					INFO("== Server: received MAC: %s from %s:%i\n", eth_packet.getSrcMACstr(), info.getIPstr(), info.getPort());
 				}
 				if(order)
 					dev->setrCounter(packet->getCounter());
@@ -117,26 +115,26 @@ int UDPServer::run() {
 							total_sent++;
 							total_size_sent += size;
 							if(sock->sendData( packet->getData(), packet->getSize(), (sockaddr *)cl->getSocketInfo(), cl->getSocketSize()) == -1) {
-								printf("== Server: error occurred while sending packet\n");
+								ERR("== Server: error occurred while sending packet\n");
 							}
 						}
 					}
 				}
 			} else {
-				printf("== Server: Unknown packet. Discarding...\n");
+				ERR("== Server: Unknown packet. Discarding...\n");
 			}
 		}
 		delete packet;
 		delete client;
 		sock->closeSocket();
-		printf("\n*** == Server: server finished. Statistics of use:\n");
-		printf("*** == Server: Total packets received: %i\n", total_received);
-		printf("*** == Server: Total packets sent: %i\n", total_sent);
-		printf("*** == Server: Total packets dropped: %i\n", total_droped);
-		printf("*** == Server: Total bytes received: %i\n", total_size_received);
-		printf("*** == Server: Total bytes sent: %i\n", total_size_sent);
+		INFO("\n*** == Server: server finished. Statistics of use:\n");
+		INFO("*** == Server: Total packets received: %i\n", total_received);
+		INFO("*** == Server: Total packets sent: %i\n", total_sent);
+		INFO("*** == Server: Total packets dropped: %i\n", total_droped);
+		INFO("*** == Server: Total bytes received: %i\n", total_size_received);
+		INFO("*** == Server: Total bytes sent: %i\n", total_size_sent);
 	} else {
-		printf("Error while binding the socket\n");
+		ERR("Error while binding the socket\n");
 	}
 	delete sock;
 	return 0;
