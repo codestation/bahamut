@@ -35,8 +35,9 @@ private:
 		void *obj;
 		node *next;
 		int counter;
-	} *head, *tail, *iter;
+	} *head, **tail, *iter;
 	int counter;
+	pthread_mutex_t lock;
 	node *create(void *obj);
 public:
 	List(COMPARE_FUNC, DELETE_FUNC = 0, COPY_FUNC = 0);

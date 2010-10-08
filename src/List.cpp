@@ -22,12 +22,13 @@
 
 List::List(COMPARE_FUNC cfunc, DELETE_FUNC dfunc, COPY_FUNC cpfunc) {
 	head = 0;
-	tail = 0;
+	tail = &head;
 	iter = 0;
 	counter = 0;
 	comp = cfunc;
 	del = dfunc;
 	cpy = cpfunc;
+	pthread_mutex_init(&lock, NULL);
 }
 
 List::node *List::create(void *obj) {
@@ -39,21 +40,17 @@ List::node *List::create(void *obj) {
 }
 
 void List::add(void *obj) {
-	if(!head) {
-		//FIXME: atomic copy
-		head = create(obj);
-		tail = head;
-	} else {
-		//FIXME: atomic copy
-		tail->next = create(obj);
-		tail = tail->next;
-	}
+	node *curr = create(obj);
+	pthread_mutex_lock(&lock);
+	*tail = curr;
+	tail = &((*tail)->next);
+	iter = head;
 	counter++;
+	pthread_mutex_unlock(&lock);
 }
 
 void *List::get(void *obj) {
 	node *curr = head;
-	__sync_fetch_and_add(&curr->counter, 1);
 	while(curr) {
 		if(!comp(curr->obj, obj))
 			return curr->obj;
@@ -61,7 +58,7 @@ void *List::get(void *obj) {
 	}
 	return 0;
 }
-
+/*
 void *List::pop() {
 	if(head) {
 		node *curr = head;
@@ -84,7 +81,7 @@ void *List::pop() {
 	}
 	return 0;
 }
-
+*/
 void *List::getByIndex(int n) {
 	node *curr = head;
 	while(n-- && curr)
@@ -97,6 +94,7 @@ bool List::exist(void *obj) {
 }
 
 bool List::remove(void *obj) {
+	pthread_mutex_lock(&lock);
 	if(head) {
 		node *curr = head;
 		node *prev = head;
@@ -105,19 +103,21 @@ bool List::remove(void *obj) {
 				prev->next = curr->next;
 				if(head == curr)
 					head = curr->next;
-				if(tail == curr)
-					tail = prev->next;
+				if(*tail == curr)
+					*tail = prev->next;
 				if(del)
 					del(curr->obj);
 				delete curr;
 				iter = head;
 				counter--;
+				pthread_mutex_unlock(&lock);
 				return true;
 			}
 			prev = curr;
 			curr = curr->next;
 		}
 	}
+	pthread_mutex_unlock(&lock);
 	return false;
 }
 
@@ -150,7 +150,7 @@ void List::clear() {
 		head = next;
 	}
 	iter = head;
-	tail = head;
+	tail = &head;
 	counter = 0;
 }
 
@@ -176,4 +176,5 @@ bool List::hasNext() {
 
 List::~List() {
 	clear();
+	pthread_mutex_destroy(&lock);
 }
