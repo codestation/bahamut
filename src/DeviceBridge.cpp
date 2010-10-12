@@ -172,7 +172,7 @@ int DeviceBridge::run() {
 			}
 			if(!remote_mac->exist((void *)packet->getEthData()->getSrcMAC())) {
 				remote_mac->add(new DeviceInfo(packet->getEthData()->getSrcMAC(), remote_mac->count()));
-				INFO("Registered new remote MAC: %s\n", packet->getEthData()->getSrcMAC());
+				INFO("Registered new remote MAC: %s\n", packet->getEthData()->getSrcMACstr());
 			}
 			if(order)
 				server_counter = packet->getCounter();
