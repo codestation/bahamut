@@ -25,11 +25,12 @@
 
 extern int log_enabled;
 
-#define DEBUG_ON() log_enabled = 2;
-#define INFO_ON() log_enabled = 1;
-#define INFO_OFF() log_enabled = 0;
-#define INFO(format, ...) if(log_enabled) printf(format, ## __VA_ARGS__)
-#define DEBUG(format, ...) if(log_enabled == 2) printf(format, ## __VA_ARGS__)
+#define DEBUG_ON() log_enabled |= 0x2;  // 00000010
+#define DEBUG_OFF() log_enabled &= 0xD; // 11111101
+#define INFO_ON() log_enabled |= 0x1;   // 00000001
+#define INFO_OFF() log_enabled &= 0xE;  // 11111110
+#define INFO(format, ...) if(log_enabled & 0x1) printf(format, ## __VA_ARGS__)
+#define DEBUG(format, ...) if(log_enabled & 0x2) printf(format, ## __VA_ARGS__)
 #define ERR(format, ...) fprintf(stderr,"%s[%i]: "format, __FILE__ , __LINE__ , ## __VA_ARGS__)
 
 #endif /* LOGGER_H_ */

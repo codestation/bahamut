@@ -17,7 +17,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
+#include "Logger.h"
 #include "DeviceBridge.h"
 
 DeviceBridge::DeviceBridge(bool packet_ordering, bool packet_buffering) {
@@ -45,7 +45,7 @@ DeviceBridge::DeviceBridge(bool packet_ordering, bool packet_buffering) {
 #endif
 	if(client_id == 0)
 		client_id++;
-	printf("Initializing client, ID: %X\n", client_id);
+	INFO("Initializing client, ID: %X\n", client_id);
 }
 
 bool DeviceBridge::makeBridge(const char *dev, const char *host, int port) {
@@ -117,7 +117,7 @@ void DeviceBridge::capture(const struct pcap_pkthdr* packet_header, const u_char
 				return;
 			}
 		}
-		//INFO("SRC: %s, DST: %s\n", eth_packet.getSrcMACstr(), eth_packet.getDstMACstr());
+		DEBUG("SRC: %s, DST: %s\n", eth_packet.getSrcMACstr(), eth_packet.getDstMACstr());
 		if(sock->sendData(cap_packet->getData(), cap_packet->getSize()) < 0) {
 			//INFO("capture_callback: end of stream reached. Finishing thread...\n");
 			//eth->breakLoop();

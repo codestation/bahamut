@@ -88,7 +88,7 @@ int UDPServer::run() {
 							dev->clearDevices();
 						} else {
 							if(order && packet->getCounter() <= dev->getrCounter()) {
-								//printf("=== Server: Packet arrives at wrong order (ID = %X, Expected > %i, Received = %i). Discarding..\n", dev->getID(), dev->getrCounter(), packet->getPacketCounter());
+								DEBUG("=== Server: Packet arrives at wrong order (ID = %X, Expected > %i, Received = %i). Discarding..\n", dev->getID(), dev->getrCounter(), packet->getCounter());
 								total_droped++;
 								continue;
 							}

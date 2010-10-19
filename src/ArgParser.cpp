@@ -24,7 +24,7 @@ ArgParser::ArgParser() {
 	host = NULL;
 	port = NULL;
 	list_interfaces = false;
-	verbose = false;
+	verbose = 0;
 	disable_order = false;
 	interf = NULL;
 	dedicated = false;
@@ -37,7 +37,7 @@ bool ArgParser::parse(int argc, char **argv) {
 	while ((c = getopt (argc, argv, "h:p:i:vold")) != -1) {
 		switch (c) {
 		case 'v':
-			verbose = true;
+			verbose++;
 			break;
 		case 'o':
 			disable_order = true;

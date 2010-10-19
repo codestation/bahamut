@@ -31,8 +31,8 @@ private:
 	char *host;
 	char *port;
 	bool list_interfaces;
-	bool verbose;
 	bool disable_order;
+	int verbose;
 	char *interf;
 	bool dedicated;
 	bool empty;
@@ -42,7 +42,7 @@ public:
 	inline const char *getHost() { return host; }
 	inline const char *getPort() { return port; }
 	inline bool listInterfaces() { return list_interfaces; }
-	inline bool verboseMode() { return verbose; }
+	inline int verboseMode() { return verbose; }
 	inline const char *interfaceName() { return interf; }
 	inline bool disableOrdering() { return disable_order; }
 	inline bool dedicatedServer() { return dedicated; }

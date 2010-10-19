@@ -46,7 +46,9 @@ void exit_signal(int signal) {
 
 int main(int argc, char ** argv) {
 	ArgParser opts;
+	INFO_ON();
 	if(!opts.parse(argc, argv)) {
+		INFO("bahamut-engine SVN r%s.\n\n", SVN_REV);
 		INFO("Usage: bahamuth-engine -h <host> -p <port>  [-i <interface>] [-l] [-o] [-d] [-v]\n\n");
 		INFO("-h    Connect to host (use localhost to create a server)\n");
 		INFO("-p    Local/remote port number\n");
@@ -54,10 +56,9 @@ int main(int argc, char ** argv) {
 		INFO("-l    List network devices and exit\n");
 		INFO("-o    Disable packet ordering rule\n");
 		INFO("-d    Create dedicated server (dont open device)\n");
-		INFO("-v    Show debug output\n");
+		INFO("-v    Show verbose output (twice for debug output)\n");
 		return 1;
 	}
-
 	if(opts.listInterfaces()) {
 		List *lst = Interface::getAdapterList();
 		if(!lst) {
@@ -76,6 +77,8 @@ int main(int argc, char ** argv) {
 
 	if(!opts.verboseMode())
 		INFO_OFF();
+	if(opts.verboseMode() > 1)
+		DEBUG_ON();
 
 	INFO("Bahamut engine SVN r%s starting...\n", SVN_REV);
 
@@ -90,19 +93,17 @@ int main(int argc, char ** argv) {
 	}
 
 	if(!opts.interfaceName() && !opts.dedicatedServer()) {
-			ERR("No interface defined, exiting...\n");
-			return 1;
+		ERR("No interface defined, exiting...\n");
+		return 1;
 	}
 
 	INFO("Installing signal handler...\n");
 	signal(SIGINT, exit_signal);
 
 	if(strcmp(opts.getHost(), "localhost") == 0) {
-		INFO("Creating UDP server...\n");
 		udp_serv = new UDPServer(atoi(opts.getPort()), !opts.disableOrdering());
 		INFO("Starting UDP server...\n");
 		udp_serv->start();
-		//INFO("Creating TCP server...\n");
 		//tcp_serv = new TCPServer(atoi(opts.getPort()));
 		//INFO("Starting TCP server...\n");
 		//tcp_serv->start();
