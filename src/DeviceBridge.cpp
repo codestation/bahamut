@@ -117,7 +117,7 @@ void DeviceBridge::capture(const struct pcap_pkthdr* packet_header, const u_char
 				return;
 			}
 		}
-		//DEBUG("SRC: %s, DST: %s\n", eth_packet.getSrcMACstr(), eth_packet.getDstMACstr());
+		//DEBUG("SRC: %s, DST: %s, size: %i\n", eth_packet.getSrcMACstr(), eth_packet.getDstMACstr(), cap_packet->getSize());
 		if(sock->sendData(cap_packet->getData(), cap_packet->getSize()) < 0) {
 			//INFO("capture_callback: end of stream reached. Finishing thread...\n");
 			//eth->breakLoop();
@@ -179,7 +179,9 @@ int DeviceBridge::run() {
 			if(inj && inj(packet))
 				continue;
 			DEBUG("Injecting packet SRC: %s, DST: %s, size: %i bytes\n", packet->getEthData()->getSrcMACstr(), packet->getEthData()->getDstMACstr(), packet->getPayloadSize());
-			eth->inject(packet->getPayload(), packet->getPayloadSize());
+			DEBUG("Payload dump:\n");
+			packet->getEthData()->hexdump();
+			//eth->inject(packet->getPayload(), packet->getPayloadSize());
 		}
 	}
 	delete packet;
