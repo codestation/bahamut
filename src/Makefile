@@ -1,6 +1,6 @@
 CC = g++
 TARGET = bahamut-engine
-CFLAGS = -O3 -pipe -fomit-frame-pointer -Wall
+CFLAGS = -O2 -pipe -fomit-frame-pointer -Wall
 LIBS = -lpcap -lpthread
 OBJS = main.o			\
 		Interface.o		\
