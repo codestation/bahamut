@@ -179,9 +179,9 @@ int DeviceBridge::run() {
 			if(inj && inj(packet))
 				continue;
 			DEBUG("Injecting packet SRC: %s, DST: %s, size: %i bytes\n", packet->getEthData()->getSrcMACstr(), packet->getEthData()->getDstMACstr(), packet->getPayloadSize());
-			DEBUG("Payload dump:\n");
-			packet->getEthData()->hexdump();
-			//eth->inject(packet->getPayload(), packet->getPayloadSize());
+			//DEBUG("Payload dump:\n");
+			//packet->getEthData()->hexdump();
+			eth->inject(packet->getPayload(), packet->getPayloadSize());
 		}
 	}
 	delete packet;
