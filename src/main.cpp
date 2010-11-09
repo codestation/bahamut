@@ -22,12 +22,13 @@
 #define WINVER 0x0501 //Windows XP
 #include <windows.h>
 #endif
+#include <stdio.h>
 #include <signal.h>
 #include "UDPServer.h"
 #include "TCPServer.h"
 #include "DeviceBridge.h"
 #include "Logger.h"
-#include "ArgParser.h"
+#include "GetOpt.h"
 #include "TCPThread.h"
 
 UDPServer *udp_serv = NULL;
@@ -44,26 +45,56 @@ void exit_signal(int signal) {
 		tcp_serv->stop();
 }
 
+void usage() {
+	INFO("bahamut-engine SVN r%s.\n\n", SVN_REV);
+	INFO("Usage: bahamuth-engine -h <host> -p <port>  [-i <interface>] [-l] [-o] [-d] [-v]\n\n");
+	INFO("-h    Connect to host (use localhost to create a server)\n");
+	INFO("-p    Local/remote port number\n");
+	INFO("-i    Network device to use\n");
+	INFO("-l    List network devices and exit\n");
+	INFO("-o    Disable packet ordering rule\n");
+	INFO("-d    Create dedicated server (dont open device)\n");
+	INFO("-v    Show verbose output (twice for debug output)\n");
+}
+
 int main(int argc, char ** argv) {
-	ArgParser opts;
-	INFO_ON();
-	if(!opts.parse(argc, argv)) {
-		INFO("bahamut-engine SVN r%s.\n\n", SVN_REV);
-		INFO("Usage: bahamuth-engine -h <host> -p <port>  [-i <interface>] [-l] [-o] [-d] [-v]\n\n");
-		INFO("-h    Connect to host (use localhost to create a server)\n");
-		INFO("-p    Local/remote port number\n");
-		INFO("-i    Network device to use\n");
-		INFO("-l    List network devices and exit\n");
-		INFO("-o    Disable packet ordering rule\n");
-		INFO("-d    Create dedicated server (dont open device)\n");
-		INFO("-v    Show verbose output (twice for debug output)\n");
-		return 1;
+	char option = 0;
+	int disable_order, verbose = 0;
+	bool list_interfaces = false;
+	bool dedicated = false;
+	bool empty = true;
+	const char *interface = NULL;
+	const char *host = NULL;
+	const char *port = NULL;
+
+	GetOpt opt(argc, argv, "h:p:i:vold");
+	while(option != '?' && (option = opt()) != EOF) {
+		switch(option) {
+		case 'v': verbose++; break;
+		case 'o': disable_order = 1; break;
+		case 'l': list_interfaces = true; break;
+		case 'd': dedicated = true; break;
+		case 'i': interface = opt.arg(); break;
+		case 'h': host = opt.arg(); break;
+		case 'p': port = opt.arg(); break;
+		case '?':
+			INFO("\n");
+			usage();
+		default:
+			return EXIT_FAILURE;
+		}
+		empty = false;
 	}
-	if(opts.listInterfaces()) {
+	INFO_ON();
+	if(empty) {
+		usage();
+		return EXIT_FAILURE;
+	}
+	if(list_interfaces) {
 		List *lst = Interface::getAdapterList();
 		if(!lst) {
 			ERR("Cant get the interface list. Exiting...\n");
-			return 1;
+			return EXIT_FAILURE;
 		}
 		int i = 0;
 		INFO("Interface list:\n");
@@ -72,50 +103,50 @@ int main(int argc, char ** argv) {
 			INFO("(%i) %s - %s\n", i++, inf->name, inf->desc);
 		}
 		delete lst;
-		return 2;
+		return EXIT_SUCCESS + 2;
 	}
 
-	if(!opts.verboseMode())
+	if(!verbose)
 		INFO_OFF();
-	if(opts.verboseMode() > 1)
+	if(verbose > 1)
 		DEBUG_ON();
 
 	INFO("Bahamut engine SVN r%s starting...\n", SVN_REV);
 
-	if(!opts.getHost()) {
+	if(!host) {
 		ERR("No host defined, exiting...\n");
-		return 1;
+		return EXIT_FAILURE;
 	}
 
-	if(!opts.getPort()) {
+	if(!port) {
 		ERR("No port defined, exiting...\n");
-		return 1;
+		return EXIT_FAILURE;
 	}
 
-	if(!opts.interfaceName() && !opts.dedicatedServer()) {
+	if(!interface && !dedicated) {
 		ERR("No interface defined, exiting...\n");
-		return 1;
+		return EXIT_FAILURE;
 	}
 
 	INFO("Installing signal handler...\n");
 	signal(SIGINT, exit_signal);
 
-	if(strcmp(opts.getHost(), "localhost") == 0) {
-		udp_serv = new UDPServer(atoi(opts.getPort()), !opts.disableOrdering());
+	if(strcmp(host, "localhost") == 0) {
+		udp_serv = new UDPServer(atoi(port), !disable_order);
 		INFO("Starting UDP server...\n");
 		udp_serv->start();
 		//tcp_serv = new TCPServer(atoi(opts.getPort()));
 		//INFO("Starting TCP server...\n");
 		//tcp_serv->start();
 	}
-	if(!opts.dedicatedServer()) {
+	if(!dedicated) {
 		if(udp_serv)
 			udp_serv->detach();
 		if(tcp_serv)
 			tcp_serv->detach();
-		bridge = new DeviceBridge(!opts.disableOrdering());
-		INFO("Making bridge wifi <==> %s:%s\n", opts.getHost(), opts.getPort());
-		if(!bridge->makeBridge( opts.interfaceName(), opts.getHost(), atoi(opts.getPort())))
+		bridge = new DeviceBridge(!disable_order);
+		INFO("Making bridge wifi <==> %s:%s\n", host, port);
+		if(!bridge->makeBridge( interface, host, atoi(port)))
 			ERR("Error while making bridge\n");
 		INFO("Bridge closed. Freeing resources\n");
 		delete bridge;
@@ -125,7 +156,7 @@ int main(int argc, char ** argv) {
 		if(tcp_serv)
 			tcp_serv->wait();
 	}
-	if(opts.interfaceName() && strcmp(opts.getHost(), "localhost") == 0) {
+	if(interface && strcmp(host, "localhost") == 0) {
 		if(udp_serv)
 			udp_serv->stop();
 		if(tcp_serv)
@@ -139,5 +170,5 @@ int main(int argc, char ** argv) {
 	}
 	delete udp_serv;
 	delete tcp_serv;
-	return 0;
+	return EXIT_SUCCESS;
 }

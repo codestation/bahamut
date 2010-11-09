@@ -30,7 +30,7 @@ bool ServerSocket::bindSocket(socket_type proto) {
 	if(!WSAStart())
 		return false;
 #endif
-	if((sock = socket(PF_INET, proto == TCP_SOCKET ? SOCK_STREAM : SOCK_DGRAM, 0)) < 0)
+	if((sock = socket(PF_INET, proto, 0)) < 0)
 		return false;
 #ifdef _WIN32
 	int iOptVal = 2;

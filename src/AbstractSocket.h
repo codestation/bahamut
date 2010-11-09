@@ -49,7 +49,7 @@ protected:
 #endif
 
 public:
-	enum socket_type {TCP_SOCKET, UDP_SOCKET};
+	enum socket_type {TCP_SOCKET = SOCK_STREAM, UDP_SOCKET = SOCK_DGRAM};
 
 #ifdef _WIN32
 protected:
