@@ -30,11 +30,11 @@
 #endif
 #include <time.h>
 #include <errno.h>
-#include "Packet.h"
-#include "Thread.h"
-#include "EthPacket.h"
-#include "ServerSocket.h"
-#include "List.h"
+#include "core/Packet.h"
+#include "core/Thread.h"
+#include "core/EthPacket.h"
+#include "core/ServerSocket.h"
+#include "core/List.h"
 
 class UDPServer: public Thread {
 

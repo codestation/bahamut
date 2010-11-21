@@ -21,11 +21,11 @@
 #ifndef TCPSERVER_H_
 #define TCPSERVER_H_
 
-#include "Thread.h"
-#include "ServerSocket.h"
+#include "core/Thread.h"
+#include "core/ServerSocket.h"
 #include "TCPThread.h"
-#include "Socket.h"
-#include "Logger.h"
+#include "core/Socket.h"
+#include "core/Logger.h"
 
 class TCPServer: public Thread {
 private:

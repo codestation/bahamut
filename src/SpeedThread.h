@@ -31,8 +31,8 @@
 #endif
 //#include <time.h>
 //#include <stdio.h>
-#include "Logger.h"
-#include "Thread.h"
+#include "core/Logger.h"
+#include "core/Thread.h"
 
 class SpeedThread: public Thread {
 private:

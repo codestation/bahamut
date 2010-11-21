@@ -18,34 +18,32 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "DeviceInfo.h"
+#include "StreamSocket.h"
 
-DeviceInfo::DeviceInfo(const u_char *psp_mac, u_int id) {
-	uid = id;
-	memcpy(mac, psp_mac, 6);
+StreamSocket::StreamSocket(Socket *s) {
+	sock = s;
+	stream = NULL;
 }
 
-inline const u_char *DeviceInfo::getMAC() {
-	return mac;
+bool StreamSocket::openStream() {
+	return (stream = fdopen(sock->getDescriptor(), "r+"));
 }
 
-u_int DeviceInfo::getUID() {
-	return uid;
+char *StreamSocket::readStream(char *data, int size) {
+	return fgets(data, size, stream);
 }
 
-char *DeviceInfo::getMACstr() {
-	sprintf(mac_str,"%.2x:%.2x:%.2x:%.2x:%.2x:%.2x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-	return mac_str;
+bool StreamSocket::writeStream(const char *data) {
+	return fputs(data, stream) >= 0;
 }
 
-void DeviceInfo::setMAC(const u_char *psp_mac) {
-	memcpy(mac, psp_mac, 6);
+void StreamSocket::closeStream() {
+	if(stream) {
+		fclose(stream);
+		stream = NULL;
+	}
 }
 
-int DeviceInfo::compareMAC(const u_char *pmac) {
-	return memcmp(mac, pmac, 6);
-}
-
-DeviceInfo::~DeviceInfo() {
-
+StreamSocket::~StreamSocket() {
+	closeStream();
 }

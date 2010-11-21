@@ -24,7 +24,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-#include "List.h"
+#include "core/List.h"
 
 #define BUFFER_SIZE 4096
 

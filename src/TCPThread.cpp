@@ -22,7 +22,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include "TCPThread.h"
-#include "Logger.h"
+#include "core/Logger.h"
 
 bool TCPThread::stop_all = false;
 

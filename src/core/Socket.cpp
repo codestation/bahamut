@@ -18,6 +18,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdio.h>
 #include "Socket.h"
 
 #ifdef _WIN32
@@ -41,27 +42,30 @@ bool Socket::connectSocket(socket_type proto) {
 	if(!WSAStart())
 		return false;
 #endif
-	if((sock = socket(PF_INET, proto == TCP_SOCKET ? SOCK_STREAM : SOCK_DGRAM, 0)) >= 0) {
+	struct addrinfo hints, *res;
+	char port_s[5];
+	sprintf(port_s,"%d",port);
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_socktype = proto;
+	hints.ai_family = AF_INET;
+	int error = getaddrinfo(host, port_s, &hints, &res);
+	if(!error) {
+		if((sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) >= 0) {
 #ifdef _WIN32
-		int iOptVal = 2;
-		setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char*)&iOptVal, sizeof(timeval));
+			int iOptVal = 2;
+			setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char*)&iOptVal, sizeof(timeval));
 #else
-		struct timeval tv;
-		tv.tv_sec = 2;
-		tv.tv_usec = 0;
-		setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(timeval));
+			struct timeval tv;
+			tv.tv_sec = 2;
+			tv.tv_usec = 0;
+			setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(timeval));
 #endif
-		memset(&client, 0, sizeof(client));
-		client.sin_family = AF_INET;
-		client.sin_port = htons(port);
-		hostent *host_n = (hostent *)gethostbyname(host);
-		if(host_n == NULL)
-			return false;
-		client.sin_addr.s_addr = ((in_addr*)(host_n->h_addr))->s_addr;
-		return connect(sock, (struct sockaddr *)&client, sizeof(client)) >= 0;
-	} else {
-		return false;
+			error = connect(sock, res->ai_addr, res->ai_addrlen);
+			freeaddrinfo(res);
+			return error >= 0;
+		}
 	}
+	return false;
 }
 
 Socket::~Socket() {

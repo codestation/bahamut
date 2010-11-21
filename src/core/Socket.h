@@ -18,33 +18,44 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "StreamSocket.h"
+#ifndef SOCKET_H_
+#define SOCKET_H_
 
-StreamSocket::StreamSocket(Socket *s) {
-	sock = s;
-	stream = NULL;
+#ifdef _WIN32
+#define WINVER 0x0501 //Windows XP
+#include <windows.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#else
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#endif
 
-}
+#include "AbstractSocket.h"
 
-bool StreamSocket::openStream() {
-	return (stream = fdopen(sock->getDescriptor(), "r+"));
-}
+#define PACKET_HEADER 10
 
-char *StreamSocket::readStream(char *data, int size) {
-	return fgets(data, size, stream);
-}
+class Socket: public AbstractSocket {
+private:
+	char host[16];
+	sockaddr_in client;
+#ifdef _WIN32
+	static bool init;
+	LPVOID lpMsgBuf;
+#endif
 
-bool StreamSocket::writeStream(const char *data) {
-	return fputs(data, stream) >= 0;
-}
+public:
 
-void StreamSocket::closeStream() {
-	if(stream) {
-		fclose(stream);
-		stream = NULL;
-	}
-}
+	Socket(const char *addr, int port);
+	Socket(int s, sockaddr_in *);
+	bool connectSocket(socket_type proto);
 
-StreamSocket::~StreamSocket() {
-	closeStream();
-}
+	inline const char *getIpAddress() { return inet_ntoa(client.sin_addr); };
+	inline int getPort() { return client.sin_port; }
+
+	virtual ~Socket();
+};
+
+#endif /*SOCKET_H_*/

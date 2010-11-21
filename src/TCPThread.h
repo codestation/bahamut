@@ -21,8 +21,8 @@
 #ifndef TCPTHREAD_H_
 #define TCPTHREAD_H_
 
-#include "Thread.h"
-#include "Socket.h"
+#include "core/Thread.h"
+#include "core/Socket.h"
 #include "HTTPParser.h"
 #include "HTTPResponse.h"
 

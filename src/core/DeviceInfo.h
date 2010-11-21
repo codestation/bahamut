@@ -37,12 +37,12 @@ private:
 	//temporary buffer to hold the MAC string
 	char mac_str[18];
 public:
-	DeviceInfo(const u_char *psp_mac, u_int uid);
+	DeviceInfo(const u_char *device_mac, u_int uid);
 	const u_char *getMAC();
 	u_int getUID();
 	char *getMACstr();
-	void setMAC(const u_char *mac);
-	int compareMAC(const u_char *mac);
+	void setMAC(const u_char *device_mac);
+	int compareMAC(const u_char *device_mac);
 	virtual ~DeviceInfo();
 };
 

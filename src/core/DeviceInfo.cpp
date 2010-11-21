@@ -18,43 +18,34 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SOCKET_H_
-#define SOCKET_H_
+#include "DeviceInfo.h"
 
-#ifdef _WIN32
-#define WINVER 0x0501 //Windows XP
-#include <windows.h>
-#include <winsock2.h>
-#else
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#endif
+DeviceInfo::DeviceInfo(const u_char *device_mac, u_int id) {
+	uid = id;
+	memcpy(mac, device_mac, 6);
+}
 
-#include "AbstractSocket.h"
+inline const u_char *DeviceInfo::getMAC() {
+	return mac;
+}
 
-#define PACKET_HEADER 10
+u_int DeviceInfo::getUID() {
+	return uid;
+}
 
-class Socket: public AbstractSocket {
-private:
-	char host[16];
-	sockaddr_in client;
-#ifdef _WIN32
-	static bool init;
-	LPVOID lpMsgBuf;
-#endif
+char *DeviceInfo::getMACstr() {
+	sprintf(mac_str,"%.2x:%.2x:%.2x:%.2x:%.2x:%.2x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+	return mac_str;
+}
 
-public:
+void DeviceInfo::setMAC(const u_char *device_mac) {
+	memcpy(mac, device_mac, 6);
+}
 
-	Socket(const char *addr, int port);
-	Socket(int s, sockaddr_in *);
-	bool connectSocket(socket_type proto);
+int DeviceInfo::compareMAC(const u_char *device_mac) {
+	return memcmp(mac, device_mac, 6);
+}
 
-	inline const char *getIpAddress() { return inet_ntoa(client.sin_addr); };
-	inline int getPort() { return client.sin_port; }
+DeviceInfo::~DeviceInfo() {
 
-	virtual ~Socket();
-};
-
-#endif /*SOCKET_H_*/
+}

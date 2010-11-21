@@ -2,44 +2,40 @@ CXX := g++
 TARGET = bahamut-engine
 LIBS := -lpcap -lpthread
 INCLUDES :=
-LIB_PATH :=
+LIB_PATH := -Lcore
 CFLAGS := -O2 -pipe -Wall
 CXXFLAGS := $(CFLAGS)
 LDFLAGS := -Wl,-O1 -Wl,--sort-common -Wl,--as-needed
 RM = rm -f
 OBJS = main.o           \
-        Interface.o     \
-        Socket.o        \
-        Packet.o        \
-        EthPacket.o     \
-        DeviceInfo.o    \
-        ServerSocket.o  \
         UDPServer.o     \
         ClientInfo.o    \
-        DeviceBridge.o  \
-        InterfaceInfo.o \
-        List.o          \
-        Logger.o        \
-        Thread.o        \
         TCPServer.o     \
         TCPThread.o     \
-        SpeedThread.o   \
         HTTPParser.o    \
-        HTTPResponse.o  \
-        AbstractSocket.o
+        HTTPResponse.o
 
 SVNREV:= -D'SVN_REV="$(shell LC_ALL=C svnversion -cn ../ | sed -e "s/.*://" -e "s/\([0-9]*\).*/\1/" | grep "[0-9]" )"'
 MISC_VARS += $(SVNREV)
 
-all: $(TARGET)
+all: static
 
-$(TARGET): $(OBJS)
-	$(CXX) $(LDFLAGS) $(OBJS) $(LIB_PATH) $(LIBS) -o $(TARGET)
+static: core $(OBJS)
+	$(CXX) $(LDFLAGS) $(OBJS) core/libbahamut-core.a $(LIBS) -o $(TARGET)
+
+shared: core $(OBJS)
+	$(CXX) $(LDFLAGS) $(OBJS) $(LIB_PATH) $(LIBS) -lbahamut-core -o $(TARGET)
+
+core:
+	cd core && make -f Makefile all
 
 .cpp.o:
 	$(CXX) $(CXXFLAGS) $(INCLUDES) $(MISC_VARS) -c $*.cpp
 
-clean:
+clean: clean-core
 	-$(RM) $(OBJS) $(TARGET)
 
-.PHONY: all clean
+clean-core:
+	cd core && make -f Makefile clean
+
+.PHONY: all clean clean-core core

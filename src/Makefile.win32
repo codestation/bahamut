@@ -1,45 +1,41 @@
 CXX := i686-pc-mingw32-g++
-TARGET = bahamut-engine.exe
-LIBS := -lwpcap -lwsock32 -liphlpapi
-INCLUDES := -I /usr/i686-pc-mingw32/usr/include -I /home/code/workspace/wpdpack/Include
-LIB_PATH := -L /home/code/workspace/wpdpack/Lib
+TARGET = bahamut-engine
+LIBS := -lwpcap -lwsock32 -liphlpapi -lws2_32
+INCLUDES := -I /usr/i686-pc-mingw32/usr/include -I /home/code/workspace/pcap/Include
+LIB_PATH := -L /home/code/workspace/pcap/Lib -Lcore
 CFLAGS := -O2 -pipe -Wall -static-libgcc
 CXXFLAGS := $(CFLAGS)
 LDFLAGS := -Wl,-O1 -Wl,--sort-common -Wl,--as-needed -Wl,--enable-auto-import
 RM = rm -f
 OBJS = main.o           \
-        Interface.o     \
-        Socket.o        \
-        Packet.o        \
-        EthPacket.o     \
-        DeviceInfo.o    \
-        ServerSocket.o  \
         UDPServer.o     \
         ClientInfo.o    \
-        DeviceBridge.o  \
-        InterfaceInfo.o \
-        List.o          \
-        Logger.o        \
-        Thread.o        \
         TCPServer.o     \
         TCPThread.o     \
-        SpeedThread.o   \
         HTTPParser.o    \
-        HTTPResponse.o  \
-        AbstractSocket.o
+        HTTPResponse.o
 
 SVNREV:= -D'SVN_REV="$(shell LC_ALL=C svnversion -cn ../ | sed -e "s/.*://" -e "s/\([0-9]*\).*/\1/" | grep "[0-9]" )"'
 MISC_VARS += $(SVNREV)
 
-all: $(TARGET)
+all: static
 
-$(TARGET): $(OBJS)
-	$(CXX) $(LDFLAGS) $(OBJS) $(LIB_PATH) $(LIBS) -o $(TARGET)
+static: core $(OBJS)
+	$(CXX) $(LDFLAGS) $(OBJS) $(LIB_PATH) core/libbahamut-core.a $(LIBS) -o $(TARGET).exe
+
+shared: core $(OBJS)
+	$(CXX) $(LDFLAGS) $(OBJS) $(LIB_PATH) $(LIBS) -lbahamut-core -o $(TARGET).exe
 
 .cpp.o:
 	$(CXX) $(CXXFLAGS) $(MISC_VARS) $(INCLUDES) -c $*.cpp
 
-clean:
-	-$(RM) $(OBJS) $(TARGET)
+core:
+	cd core && make -f Makefile.win32 all
 
-.PHONY: all clean
+clean: clean-core
+	-$(RM) $(OBJS) $(TARGET).exe
+	
+clean-core:
+	cd core && make -f Makefile.win32 clean
+
+.PHONY: all clean clean-core core

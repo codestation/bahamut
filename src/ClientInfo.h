@@ -30,8 +30,8 @@
 #endif
 
 #include <string.h>
-#include "DeviceInfo.h"
-#include "List.h"
+#include "core/DeviceInfo.h"
+#include "core/List.h"
 
 class ClientInfo {
 private:

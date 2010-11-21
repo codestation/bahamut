@@ -26,23 +26,45 @@
 #include <signal.h>
 #include "UDPServer.h"
 #include "TCPServer.h"
-#include "DeviceBridge.h"
-#include "Logger.h"
-#include "GetOpt.h"
+#include "core/Interface.h"
+#include "core/Logger.h"
+#include "core/GetOpt.h"
 #include "TCPThread.h"
+#include "core/InterfaceAdapter.h"
+#include "core/SocketAdapter.h"
 
 UDPServer *udp_serv = NULL;
 TCPServer *tcp_serv = NULL;
-DeviceBridge *bridge = NULL;
+
+SocketAdapter *sock;
+InterfaceAdapter *inter;
+
+bool usr_interrupt = false;
 
 void exit_signal(int signal) {
 	INFO("\nTrapped CTRL+C signal, shutting down...\n");
-	if(bridge)
-		bridge->removeBridge();
+	if(sock)
+		sock->close();
+	if(inter)
+		inter->close();
+	usr_interrupt = true;
+	//bridge->removeBridge();
 	if(udp_serv)
 		udp_serv->stop();
 	if(tcp_serv)
 		tcp_serv->stop();
+}
+
+void wait() {
+#ifndef _WIN32
+	sigset_t mask, oldmask;
+	sigemptyset (&mask);
+	sigaddset (&mask, SIGINT);
+	sigprocmask (SIG_BLOCK, &mask, &oldmask);
+	while (!usr_interrupt)
+		sigsuspend (&oldmask);
+	sigprocmask (SIG_UNBLOCK, &mask, NULL);
+#endif
 }
 
 void usage() {
@@ -63,7 +85,7 @@ int main(int argc, char ** argv) {
 	bool list_interfaces = false;
 	bool dedicated = false;
 	bool empty = true;
-	const char *interface = NULL;
+	const char *inter_name = NULL;
 	const char *host = NULL;
 	const char *port = NULL;
 
@@ -74,7 +96,7 @@ int main(int argc, char ** argv) {
 		case 'o': disable_order = 1; break;
 		case 'l': list_interfaces = true; break;
 		case 'd': dedicated = true; break;
-		case 'i': interface = opt.arg(); break;
+		case 'i': inter_name = opt.arg(); break;
 		case 'h': host = opt.arg(); break;
 		case 'p': port = opt.arg(); break;
 		case '?':
@@ -123,7 +145,7 @@ int main(int argc, char ** argv) {
 		return EXIT_FAILURE;
 	}
 
-	if(!interface && !dedicated) {
+	if(!inter_name && !dedicated) {
 		ERR("No interface defined, exiting...\n");
 		return EXIT_FAILURE;
 	}
@@ -144,19 +166,25 @@ int main(int argc, char ** argv) {
 			udp_serv->detach();
 		if(tcp_serv)
 			tcp_serv->detach();
-		bridge = new DeviceBridge(!disable_order);
+		//bridge = new DeviceBridge(!disable_order);
 		INFO("Making bridge wifi <==> %s:%s\n", host, port);
-		if(!bridge->makeBridge( interface, host, atoi(port)))
+		inter = new InterfaceAdapter(inter_name);
+		sock = new SocketAdapter(host, atoi(port));
+		if(!(inter->out(sock) && sock->out(inter)))
+		//if(!bridge->makeBridge( interface, host, atoi(port)))
 			ERR("Error while making bridge\n");
+		wait();
 		INFO("Bridge closed. Freeing resources\n");
-		delete bridge;
+		//delete bridge;
+		delete inter;
+		delete sock;
 	} else {
 		if(udp_serv)
 			udp_serv->wait();
 		if(tcp_serv)
 			tcp_serv->wait();
 	}
-	if(interface && strcmp(host, "localhost") == 0) {
+	if(inter_name && strcmp(host, "localhost") == 0) {
 		if(udp_serv)
 			udp_serv->stop();
 		if(tcp_serv)
